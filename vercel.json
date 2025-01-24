@@ -11,9 +11,6 @@
         "src": "/(.*)",
         "dest": "src/index.js"
       }
-    ],
-    "engines": {
-        "node": "20.15.1"
-    }
+    ]
 }
   
