@@ -1,13 +1,11 @@
-// routes/task.js
 const express = require('express');
 const quotesService = require('./services.js');
 
 const router = express.Router();
 
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
+router.get('/random', async (req, res) => {
   try {
-    const quotes = await quotesService.getQuotesById(id);
+    const quotes = await quotesService.getQuotesRandom();
     if (quotes) {
       res.json(quotes);
     } else {
