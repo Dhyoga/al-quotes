@@ -1,9 +1,7 @@
-// index.js
-const express = require('express');
 const bodyParser = require('body-parser');
-const quotesRoutes = require('./routes');
+const quotesRoutes = require('./routes.js');
 
-const app = express();
+const app = require('express')();
 const port = 3000;
 
 app.use(bodyParser.json());
