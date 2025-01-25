@@ -1,8 +1,18 @@
 const bodyParser = require('body-parser');
+const cors = require('cors'); // Tambahkan import cors
 const quotesRoutes = require('./routes.js');
 
 const app = require('express')();
 const port = 3000;
+
+// Gunakan middleware CORS
+app.use(
+    cors({
+        origin: '*', // Mengizinkan semua origin (bisa disesuaikan untuk keamanan)
+        methods: ['GET', 'POST', 'PUT', 'DELETE'], // Metode HTTP yang diizinkan
+        allowedHeaders: ['Content-Type', 'Authorization'], // Header yang diizinkan
+    })
+);
 
 app.use(bodyParser.json());
 
