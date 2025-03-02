@@ -4,20 +4,14 @@ const router = express.Router();
 
 const getPictureRandom = async () => {
   try {
-    const totalPictures = await prisma.pictures.count();
-    if (totalPictures === 0) {
-      return null; // Jika tabel kosong, kembalikan null
-    }
-
-    const randomId = Math.floor(Math.random() * totalPictures) + 1;
-
-    return await prisma.pictures.findUnique({
-      where: { id: randomId },
+    const picture = await prisma.pictures.findFirst({
+      skip: Math.floor(Math.random() * await prisma.pictures.count()),  // Menggunakan skip untuk gambar acak
     });
+    return picture;
   } catch (error) {
     throw new Error(error.message);
   }
-}
+};
 
 router.get('/random', async (req, res) => {
   try {
