@@ -4,16 +4,10 @@ const router = express.Router();
 
 const getQuotesRandom = async () => {
   try {
-    const totalQuotes = await prisma.quotes.count();
-    if (totalQuotes === 0) {
-      return null; // Jika tabel kosong, kembalikan null
-    }
-
-    const randomId = Math.floor(Math.random() * totalQuotes) + 1;
-
-    return await prisma.quotes.findUnique({
-      where: { id: randomId },
+    const quotes = await prisma.quotes.findFirst({
+      skip: Math.floor(Math.random() * await prisma.quotes.count()),  // Menggunakan skip untuk quotes acak
     });
+    return quotes;
   } catch (error) {
     throw new Error(error.message);
   }
