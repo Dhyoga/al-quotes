@@ -13,17 +13,35 @@ const getPictureRandom = async () => {
   }
 };
 
-router.get('/random', async (req, res) => {
+const getPictures = async () => {
   try {
-    const picture = await getPictureRandom();
-    if (picture) {
-      res.json(picture);
-    } else {
-      res.status(404).json({ message: 'Picture not found' });
-    }
+    const pictures = await prisma.pictures.findMany();
+    return pictures;
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    throw new Error(error.message);
   }
-});
+};
+
+router
+  .get('/random', async (req, res) => {
+    try {
+      const picture = await getPictureRandom();
+      if (picture) {
+        res.json(picture);
+      } else {
+        res.status(404).json({ message: 'Picture not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  })
+  .get('/', async (req, res) => {
+    try {
+      const pictures = await getPictures();
+      res.json(pictures);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 
 module.exports = router;
