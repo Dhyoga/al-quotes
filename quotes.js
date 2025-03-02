@@ -1,4 +1,6 @@
+const express = require('express');
 const prisma = new (require('@prisma/client')).PrismaClient();
+const router = express.Router();
 
 const getQuotesRandom = async () => {
   try {
@@ -17,7 +19,17 @@ const getQuotesRandom = async () => {
   }
 };
 
+router.get('/random', async (req, res) => {
+  try {
+    const quotes = await getQuotesRandom();
+    if (quotes) {
+      res.json(quotes);
+    } else {
+      res.status(404).json({ message: 'Quotes not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-module.exports = {
-  getQuotesRandom
-};
+module.exports = router;

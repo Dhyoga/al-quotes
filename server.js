@@ -1,7 +1,7 @@
 const bodyParser = require('body-parser');
 const cors = require('cors'); // Tambahkan import cors
-const quotesRoutes = require('./routes.js');
-
+const quotesRoutes = require('./quotes.js');
+const picturesRoutes = require('./pictures.js');
 const app = require('express')();
 const port = 3000;
 
@@ -9,7 +9,7 @@ const port = 3000;
 app.use(
     cors({
         origin: '*', // Mengizinkan semua origin (bisa disesuaikan untuk keamanan)
-        methods: ['GET', 'POST', 'PUT', 'DELETE'], // Metode HTTP yang diizinkan
+        methods: ['GET'], // Metode HTTP yang diizinkan
         allowedHeaders: ['Content-Type', 'Authorization'], // Header yang diizinkan
     })
 );
@@ -17,6 +17,7 @@ app.use(
 app.use(bodyParser.json());
 
 app.use('/quotes', quotesRoutes);
+app.use('/pictures', picturesRoutes);
 
 app.get('/', (req, res) => {
     res.send('Remindeen API');
