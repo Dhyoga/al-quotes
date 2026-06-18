@@ -3,7 +3,7 @@ const cors = require('cors'); // Tambahkan import cors
 const quotesRoutes = require('./quotes.js');
 const picturesRoutes = require('./pictures.js');
 const app = require('express')();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Gunakan middleware CORS
 app.use(
@@ -23,8 +23,14 @@ app.get('/', (req, res) => {
     res.send('Remindeen API');
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.use((err, req, res, next) => {
+    res.status(500).json({ error: err.message });
 });
+
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
+}
 
 module.exports = app;
