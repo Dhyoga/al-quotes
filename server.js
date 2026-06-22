@@ -2,15 +2,28 @@ const bodyParser = require('body-parser');
 const cors = require('cors'); // Tambahkan import cors
 const quotesRoutes = require('./quotes.js');
 const picturesRoutes = require('./pictures.js');
+const tasksRoutes = require('./tasks.js');
+const habitsRoutes = require('./habits.js');
 const app = require('express')();
 const port = process.env.PORT || 3000;
 
-// Gunakan middleware CORS
+// Quotes & Pictures tetap public, read-only, untuk semua origin
 app.use(
+    ['/quotes', '/pictures'],
     cors({
-        origin: '*', // Mengizinkan semua origin (bisa disesuaikan untuk keamanan)
-        methods: ['GET'], // Metode HTTP yang diizinkan
-        allowedHeaders: ['Content-Type', 'Authorization'], // Header yang diizinkan
+        origin: '*',
+        methods: ['GET'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+);
+
+// Tasks & Habits butuh write methods, dibatasi ke origin extension saja
+app.use(
+    ['/tasks', '/habits'],
+    cors({
+        origin: process.env.EXTENSION_ORIGIN || false,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
 
@@ -18,6 +31,8 @@ app.use(bodyParser.json());
 
 app.use('/quotes', quotesRoutes);
 app.use('/pictures', picturesRoutes);
+app.use('/tasks', tasksRoutes);
+app.use('/habits', habitsRoutes);
 
 app.get('/', (req, res) => {
     res.send('Remindeen API');
