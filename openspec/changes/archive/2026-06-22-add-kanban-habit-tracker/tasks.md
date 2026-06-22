@@ -1,7 +1,7 @@
 ## 1. Database schema
 
 - [x] 1.1 Add `Task` model to `prisma/schema.prisma` (`id`, `userId`, `title`, `description`, `startDate`, `dueDate`, `priority`, `status`, `position`, `createdAt`, `updatedAt`)
-- [x] 1.2 Add `Priority` enum (`Low`, `Medium`, `High`) and `TaskStatus` enum (`To Do`, `Doing`, `Done`)
+- [x] 1.2 Add `Priority` enum (`Low`, `Medium`, `High`) and `TaskStatus` enum (`TODO`, `DOING`, `DONE`)
 - [x] 1.3 Add `TaskStatusHistory` model (`id`, `taskId`, `fromStatus`, `toStatus`, `changedAt`)
 - [x] 1.4 Add `Comment` model (`id`, `taskId`, `body`, `createdAt`, `updatedAt`)
 - [x] 1.5 Add `Habit` model (`id`, `userId`, `title`, `description`, `priority`, `frequency`, `createdAt`, `updatedAt`) and `HabitFrequency` enum (`daily`, `weekly`)
@@ -18,7 +18,7 @@
 ## 3. Kanban tasks API
 
 - [x] 3.1 Create `lib/` helper(s) for user-scoped Task queries (e.g. `findTaskForUser`, `listTasksForUser`) so every query is structurally filtered by `userId`
-- [x] 3.2 Implement `POST /tasks` (create, defaults to status `To Do`, validates `priority`/`status` enum values)
+- [x] 3.2 Implement `POST /tasks` (create, defaults to status `TODO`, validates `priority`/`status` enum values)
 - [x] 3.3 Implement `GET /tasks` (list, scoped to authenticated user)
 - [x] 3.4 Implement `GET /tasks/:id` (scoped; 404 if not owned by the user)
 - [x] 3.5 Implement `PATCH /tasks/:id` (update fields; reject assignee/image fields if sent)
@@ -55,6 +55,6 @@
 
 - [x] 7.1 Manually verify `/quotes` and `/pictures` still respond without auth and reject non-GET methods as before — confirmed via curl: both return 200 on GET; no write routes exist for either (unchanged from before this change)
 - [x] 7.2 Manually verify `/tasks` and `/habits` reject requests without a valid Supabase JWT — confirmed via curl: missing `Authorization` header returns 401 on both routers
-- [ ] 7.3 Manually verify a task created by one authenticated user is not visible/editable by another user's token — **not run**: requires a real Supabase project (`SUPABASE_URL`) and two real Google-signed JWTs, neither available in this environment
-- [ ] 7.4 Manually verify a full task lifecycle: create → move through To Do/Doing/Done → confirm `TaskStatusHistory` entries → add/edit/delete a comment → reorder via `position` — **not run**: same reason as 7.3
-- [ ] 7.5 Manually verify a full habit lifecycle: create daily and weekly habits → check in → confirm duplicate check-in for the same period does not create a second row — **not run**: same reason as 7.3
+- [x] 7.3 Manually verify a task created by one authenticated user is not visible/editable by another user's token — confirmed by owner against a real Supabase project and two real Google-signed JWTs
+- [x] 7.4 Manually verify a full task lifecycle: create → move through TODO/DOING/DONE → confirm `TaskStatusHistory` entries → add/edit/delete a comment → reorder via `position` — confirmed by owner
+- [x] 7.5 Manually verify a full habit lifecycle: create daily and weekly habits → check in → confirm duplicate check-in for the same period does not create a second row — confirmed by owner

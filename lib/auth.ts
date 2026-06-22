@@ -1,3 +1,4 @@
+import type { Request, Response, NextFunction } from 'express';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -5,15 +6,17 @@ const jwks = supabaseUrl
   ? createRemoteJWKSet(new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`))
   : null;
 
-const requireAuth = async (req, res, next) => {
+const requireAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const [scheme, token] = (req.headers.authorization || '').split(' ');
 
   if (scheme !== 'Bearer' || !token) {
-    return res.status(401).json({ message: 'Missing or invalid Authorization header' });
+    res.status(401).json({ message: 'Missing or invalid Authorization header' });
+    return;
   }
 
   if (!jwks) {
-    return res.status(500).json({ message: 'Auth is not configured (missing SUPABASE_URL)' });
+    res.status(500).json({ message: 'Auth is not configured (missing SUPABASE_URL)' });
+    return;
   }
 
   try {

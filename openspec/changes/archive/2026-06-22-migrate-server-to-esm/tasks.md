@@ -34,6 +34,6 @@
 - [x] 7.1 `node server.js` (or `npm run dev`) boots locally without `ERR_REQUIRE_ESM` or any import/export resolution error — confirmed: server starts, "Server is running on port 3000"
 - [x] 7.2 `GET /quotes` and `GET /pictures` still respond 200 without auth, unchanged from before this change — confirmed via curl: both 200
 - [x] 7.3 `GET /tasks` and `GET /habits` without an `Authorization` header still return `401`, confirming `lib/auth.js` (and `jose`) loads correctly under native ESM — confirmed via curl: both 401
-- [ ] 7.4 A request to `/tasks` or `/habits` with a valid Supabase JWT still succeeds, confirming `jwtVerify`/`createRemoteJWKSet` behave identically post-conversion — **not run**: requires a real Supabase project (`SUPABASE_URL`) and a real Google-signed JWT, neither available in this environment (same constraint noted in `add-kanban-habit-tracker` 7.3/7.4)
-- [ ] 7.5 Deploy to a Vercel preview and confirm `/tasks` and `/habits` no longer throw `ERR_REQUIRE_ESM` (the original failure this change fixes) — **not run**: requires pushing/deploying, holding for owner confirmation
-- [ ] 7.6 Confirm `vercel-build` (`prisma generate && prisma migrate deploy`) still runs successfully — **not run**: `migrate deploy` runs against the live Supabase database, holding for owner confirmation before running
+- [x] 7.4 A request to `/tasks` or `/habits` with a valid Supabase JWT still succeeds, confirming `jwtVerify`/`createRemoteJWKSet` behave identically post-conversion — confirmed by owner against a real Supabase project and JWT
+- [x] 7.5 Deploy to a Vercel preview and confirm `/tasks` and `/habits` no longer throw `ERR_REQUIRE_ESM` (the original failure this change fixes) — confirmed by owner on a Vercel preview deploy
+- [x] 7.6 Confirm `vercel-build` (`prisma generate && prisma migrate deploy`) still runs successfully — confirmed by owner

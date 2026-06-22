@@ -1,11 +1,12 @@
 import prisma from './prisma.js';
 
-const listTasksForUser = (userId) =>
+const listTasksForUser = (userId: string) =>
   prisma.task.findMany({
     where: { userId },
     orderBy: [{ status: 'asc' }, { position: 'asc' }],
   });
 
-const findTaskForUser = (userId, id) => prisma.task.findFirst({ where: { id, userId } });
+const findTaskForUser = (userId: string, id: number) =>
+  prisma.task.findFirst({ where: { id, userId } });
 
 export { listTasksForUser, findTaskForUser };

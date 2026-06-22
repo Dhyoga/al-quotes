@@ -1,28 +1,28 @@
 ## ADDED Requirements
 
 ### Requirement: Create task
-Authenticated users SHALL be able to create a task with a required `title` and optional `description`, `startDate`, `dueDate`, and `priority`. A newly created task SHALL default to status `To Do`.
+Authenticated users SHALL be able to create a task with a required `title` and optional `description`, `startDate`, `dueDate`, and `priority`. A newly created task SHALL default to status `TODO`.
 
 #### Scenario: Create a task with required fields
 - **WHEN** an authenticated user submits a new task with at least a `title`
-- **THEN** the system creates the task with status `To Do`, associates it with the user, and returns the created task
+- **THEN** the system creates the task with status `TODO`, associates it with the user, and returns the created task
 
 ### Requirement: Three-state status workflow
-A task's `status` SHALL be one of `To Do`, `Doing`, or `Done`.
+A task's `status` SHALL be one of `TODO`, `DOING`, or `DONE`.
 
 #### Scenario: Update task status
-- **WHEN** a user updates a task's status to one of `To Do`, `Doing`, or `Done`
+- **WHEN** a user updates a task's status to one of `TODO`, `DOING`, or `DONE`
 - **THEN** the system updates the task's status and appends a record to the task's status history
 
 #### Scenario: Reject invalid status value
-- **WHEN** a user attempts to set a task's status to a value other than `To Do`, `Doing`, or `Done`
+- **WHEN** a user attempts to set a task's status to a value other than `TODO`, `DOING`, or `DONE`
 - **THEN** the system rejects the request with a validation error and does not change the task
 
 ### Requirement: Status change history
 Every status transition on a task SHALL be recorded in an append-only history log.
 
 #### Scenario: Status history accumulates across transitions
-- **WHEN** a task moves from `To Do` to `Doing`, and later from `Doing` to `Done`
+- **WHEN** a task moves from `TODO` to `DOING`, and later from `DOING` to `DONE`
 - **THEN** the system records two separate history entries, each with the previous status, new status, and a timestamp
 
 ### Requirement: Manual ordering within a column

@@ -1,5 +1,5 @@
-import prisma from './lib/prisma.js';
-import createResourceRouter from './lib/createResourceRouter.js';
+import prisma from '../lib/prisma.js';
+import createResourceRouter from '../lib/createResourceRouter.js';
 
 export default createResourceRouter({
   prisma,

@@ -1,12 +1,29 @@
-import express from 'express';
+import express, { type Router } from 'express';
+import type { PrismaClient } from '@prisma/client';
 
-const createResourceRouter = ({ prisma, model, tableName, notFoundMessage }) => {
+interface ResourceModel {
+  findMany: () => Promise<unknown[]>;
+}
+
+interface CreateResourceRouterOptions {
+  prisma: PrismaClient;
+  model: ResourceModel;
+  tableName: string;
+  notFoundMessage: string;
+}
+
+const createResourceRouter = ({
+  prisma,
+  model,
+  tableName,
+  notFoundMessage,
+}: CreateResourceRouterOptions): Router => {
   const router = express.Router();
 
   router
     .get('/random', async (req, res, next) => {
       try {
-        const rows = await prisma.$queryRawUnsafe(
+        const rows = await prisma.$queryRawUnsafe<unknown[]>(
           `SELECT * FROM "${tableName}" ORDER BY RANDOM() LIMIT 1`
         );
         const item = rows[0];

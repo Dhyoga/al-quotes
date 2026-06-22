@@ -1,11 +1,11 @@
 import { fileURLToPath } from 'url';
 import bodyParser from 'body-parser';
 import cors from 'cors'; // Tambahkan import cors
-import quotesRoutes from './quotes.js';
-import picturesRoutes from './pictures.js';
-import tasksRoutes from './tasks.js';
-import habitsRoutes from './habits.js';
-import express from 'express';
+import quotesRoutes from './routes/quotes.js';
+import picturesRoutes from './routes/pictures.js';
+import tasksRoutes from './routes/tasks.js';
+import habitsRoutes from './routes/habits.js';
+import express, { type Request, type Response, type NextFunction } from 'express';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -37,11 +37,11 @@ app.use('/pictures', picturesRoutes);
 app.use('/tasks', tasksRoutes);
 app.use('/habits', habitsRoutes);
 
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
     res.send('Remindeen API');
 });
 
-app.use((err, req, res, next) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     res.status(500).json({ error: err.message });
 });
 

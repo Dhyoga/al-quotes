@@ -1,15 +1,16 @@
 import express from 'express';
-import prisma from './lib/prisma.js';
-import requireAuth from './lib/auth.js';
-import { listTasksForUser, findTaskForUser } from './lib/tasks.js';
+import { Priority, TaskStatus, type Prisma } from '@prisma/client';
+import prisma from '../lib/prisma.js';
+import requireAuth from '../lib/auth.js';
+import { listTasksForUser, findTaskForUser } from '../lib/tasks-repository.js';
 
-const VALID_STATUS = ['TODO', 'DOING', 'DONE'];
-const VALID_PRIORITY = ['Low', 'Medium', 'High'];
+const VALID_STATUS = Object.values(TaskStatus);
+const VALID_PRIORITY = Object.values(Priority);
 
 const router = express.Router();
 router.use(requireAuth);
 
-const nextPosition = async (userId, status) => {
+const nextPosition = async (userId: string, status: TaskStatus): Promise<number> => {
   const last = await prisma.task.findFirst({
     where: { userId, status },
     orderBy: { position: 'desc' },
@@ -29,10 +30,10 @@ router
         return res.status(400).json({ message: 'Invalid priority' });
       }
 
-      const position = await nextPosition(req.userId, 'TODO');
+      const position = await nextPosition(req.userId!, TaskStatus.TODO);
       const task = await prisma.task.create({
         data: {
-          userId: req.userId,
+          userId: req.userId!,
           title,
           description,
           startDate: startDate ? new Date(startDate) : undefined,
@@ -49,7 +50,7 @@ router
   })
   .get('/', async (req, res, next) => {
     try {
-      const tasks = await listTasksForUser(req.userId);
+      const tasks = await listTasksForUser(req.userId!);
       res.json(tasks);
     } catch (error) {
       next(error);
@@ -57,7 +58,7 @@ router
   })
   .get('/:id', async (req, res, next) => {
     try {
-      const task = await findTaskForUser(req.userId, Number(req.params.id));
+      const task = await findTaskForUser(req.userId!, Number(req.params.id));
       if (!task) return res.status(404).json({ message: 'Task not found' });
       res.json(task);
     } catch (error) {
@@ -67,7 +68,7 @@ router
   .patch('/:id', async (req, res, next) => {
     try {
       const id = Number(req.params.id);
-      const existing = await findTaskForUser(req.userId, id);
+      const existing = await findTaskForUser(req.userId!, id);
       if (!existing) return res.status(404).json({ message: 'Task not found' });
 
       const { title, description, startDate, dueDate, priority, status } = req.body;
@@ -79,7 +80,7 @@ router
         return res.status(400).json({ message: 'Invalid status' });
       }
 
-      const data = {};
+      const data: Prisma.TaskUpdateInput = {};
       if (title !== undefined) data.title = title;
       if (description !== undefined) data.description = description;
       if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null;
@@ -106,18 +107,18 @@ router
   .patch('/:id/position', async (req, res, next) => {
     try {
       const id = Number(req.params.id);
-      const existing = await findTaskForUser(req.userId, id);
+      const existing = await findTaskForUser(req.userId!, id);
       if (!existing) return res.status(404).json({ message: 'Task not found' });
 
       const { position, beforeId, afterId } = req.body;
-      let newPosition;
+      let newPosition: number;
 
       if (typeof position === 'number') {
         newPosition = position;
       } else {
         const [before, after] = await Promise.all([
-          beforeId ? findTaskForUser(req.userId, Number(beforeId)) : null,
-          afterId ? findTaskForUser(req.userId, Number(afterId)) : null,
+          beforeId ? findTaskForUser(req.userId!, Number(beforeId)) : null,
+          afterId ? findTaskForUser(req.userId!, Number(afterId)) : null,
         ]);
 
         if (before && after) {
@@ -140,7 +141,7 @@ router
   .delete('/:id', async (req, res, next) => {
     try {
       const id = Number(req.params.id);
-      const existing = await findTaskForUser(req.userId, id);
+      const existing = await findTaskForUser(req.userId!, id);
       if (!existing) return res.status(404).json({ message: 'Task not found' });
       await prisma.task.delete({ where: { id } });
       res.status(204).end();
@@ -151,7 +152,7 @@ router
   .post('/:id/comments', async (req, res, next) => {
     try {
       const taskId = Number(req.params.id);
-      const task = await findTaskForUser(req.userId, taskId);
+      const task = await findTaskForUser(req.userId!, taskId);
       if (!task) return res.status(404).json({ message: 'Task not found' });
 
       const { body } = req.body;
@@ -166,7 +167,7 @@ router
   .get('/:id/comments', async (req, res, next) => {
     try {
       const taskId = Number(req.params.id);
-      const task = await findTaskForUser(req.userId, taskId);
+      const task = await findTaskForUser(req.userId!, taskId);
       if (!task) return res.status(404).json({ message: 'Task not found' });
 
       const comments = await prisma.comment.findMany({
@@ -181,7 +182,7 @@ router
   .patch('/:id/comments/:commentId', async (req, res, next) => {
     try {
       const taskId = Number(req.params.id);
-      const task = await findTaskForUser(req.userId, taskId);
+      const task = await findTaskForUser(req.userId!, taskId);
       if (!task) return res.status(404).json({ message: 'Task not found' });
 
       const commentId = Number(req.params.commentId);
@@ -200,7 +201,7 @@ router
   .delete('/:id/comments/:commentId', async (req, res, next) => {
     try {
       const taskId = Number(req.params.id);
-      const task = await findTaskForUser(req.userId, taskId);
+      const task = await findTaskForUser(req.userId!, taskId);
       if (!task) return res.status(404).json({ message: 'Task not found' });
 
       const commentId = Number(req.params.commentId);
