@@ -1,10 +1,13 @@
-const bodyParser = require('body-parser');
-const cors = require('cors'); // Tambahkan import cors
-const quotesRoutes = require('./quotes.js');
-const picturesRoutes = require('./pictures.js');
-const tasksRoutes = require('./tasks.js');
-const habitsRoutes = require('./habits.js');
-const app = require('express')();
+import { fileURLToPath } from 'url';
+import bodyParser from 'body-parser';
+import cors from 'cors'; // Tambahkan import cors
+import quotesRoutes from './quotes.js';
+import picturesRoutes from './pictures.js';
+import tasksRoutes from './tasks.js';
+import habitsRoutes from './habits.js';
+import express from 'express';
+
+const app = express();
 const port = process.env.PORT || 3000;
 
 // Quotes & Pictures tetap public, read-only, untuk semua origin
@@ -42,10 +45,10 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: err.message });
 });
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     app.listen(port, () => {
         console.log(`Server is running on port ${port}`);
     });
 }
 
-module.exports = app;
+export default app;

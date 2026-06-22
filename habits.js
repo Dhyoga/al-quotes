@@ -1,8 +1,8 @@
-const express = require('express');
-const prisma = require('./lib/prisma');
-const requireAuth = require('./lib/auth');
-const { listHabitsForUser, findHabitForUser } = require('./lib/habits');
-const { computePeriodStart } = require('./lib/period');
+import express from 'express';
+import prisma from './lib/prisma.js';
+import requireAuth from './lib/auth.js';
+import { listHabitsForUser, findHabitForUser } from './lib/habits.js';
+import { computePeriodStart } from './lib/period.js';
 
 const VALID_FREQUENCY = ['daily', 'weekly'];
 const VALID_PRIORITY = ['Low', 'Medium', 'High'];
@@ -122,4 +122,4 @@ router
     }
   });
 
-module.exports = router;
+export default router;

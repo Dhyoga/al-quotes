@@ -1,7 +1,7 @@
-const express = require('express');
-const prisma = require('./lib/prisma');
-const requireAuth = require('./lib/auth');
-const { listTasksForUser, findTaskForUser } = require('./lib/tasks');
+import express from 'express';
+import prisma from './lib/prisma.js';
+import requireAuth from './lib/auth.js';
+import { listTasksForUser, findTaskForUser } from './lib/tasks.js';
 
 const VALID_STATUS = ['TODO', 'DOING', 'DONE'];
 const VALID_PRIORITY = ['Low', 'Medium', 'High'];
@@ -214,4 +214,4 @@ router
     }
   });
 
-module.exports = router;
+export default router;

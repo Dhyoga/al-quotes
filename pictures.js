@@ -1,7 +1,7 @@
-const prisma = require('./lib/prisma');
-const createResourceRouter = require('./lib/createResourceRouter');
+import prisma from './lib/prisma.js';
+import createResourceRouter from './lib/createResourceRouter.js';
 
-module.exports = createResourceRouter({
+export default createResourceRouter({
   prisma,
   model: prisma.pictures,
   tableName: 'Pictures',
