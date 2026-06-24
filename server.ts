@@ -5,6 +5,8 @@ import quotesRoutes from './routes/quotes.js';
 import picturesRoutes from './routes/pictures.js';
 import tasksRoutes from './routes/tasks.js';
 import habitsRoutes from './routes/habits.js';
+import apiKeysRoutes from './routes/api-keys.js';
+import mcpRoutes from './routes/mcp.js';
 import express, { type Request, type Response, type NextFunction } from 'express';
 
 const app = express();
@@ -20,9 +22,9 @@ app.use(
     })
 );
 
-// Tasks & Habits butuh write methods, dibatasi ke origin extension saja
+// Tasks, Habits & API key management butuh write methods, dibatasi ke origin extension saja
 app.use(
-    ['/tasks', '/habits'],
+    ['/tasks', '/habits', '/auth/api-keys'],
     cors({
         origin: process.env.EXTENSION_ORIGIN || false,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -36,6 +38,8 @@ app.use('/quotes', quotesRoutes);
 app.use('/pictures', picturesRoutes);
 app.use('/tasks', tasksRoutes);
 app.use('/habits', habitsRoutes);
+app.use('/auth/api-keys', apiKeysRoutes);
+app.use('/mcp', mcpRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Remindeen API');

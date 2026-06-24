@@ -1,7 +1,7 @@
 import express from 'express';
 import { HabitFrequency, Priority, type Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
-import requireAuth from '../lib/auth.js';
+import { requireJwt } from '../lib/auth.js';
 import { listHabitsForUser, findHabitForUser } from '../lib/habits-repository.js';
 import { computePeriodStart } from '../lib/period.js';
 
@@ -9,7 +9,7 @@ const VALID_FREQUENCY = Object.values(HabitFrequency);
 const VALID_PRIORITY = Object.values(Priority);
 
 const router = express.Router();
-router.use(requireAuth);
+router.use(requireJwt);
 
 router
   .post('/', async (req, res, next) => {

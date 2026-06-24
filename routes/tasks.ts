@@ -1,14 +1,14 @@
 import express from 'express';
 import { Priority, TaskStatus, type Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
-import requireAuth from '../lib/auth.js';
+import { requireJwt } from '../lib/auth.js';
 import { listTasksForUser, findTaskForUser } from '../lib/tasks-repository.js';
 
 const VALID_STATUS = Object.values(TaskStatus);
 const VALID_PRIORITY = Object.values(Priority);
 
 const router = express.Router();
-router.use(requireAuth);
+router.use(requireJwt);
 
 const nextPosition = async (userId: string, status: TaskStatus): Promise<number> => {
   const last = await prisma.task.findFirst({
