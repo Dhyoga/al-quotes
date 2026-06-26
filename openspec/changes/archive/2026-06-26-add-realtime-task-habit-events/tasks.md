@@ -27,11 +27,11 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Manually verify: creating, updating (including a status change and a position change), and deleting a task via REST each publish the expected event (observe via Pusher's debug console or a temporary test subscriber).
-- [ ] 5.2 Manually verify: `create_task` and `update_task` via `/mcp` each publish the same events as their REST counterparts.
-- [ ] 5.3 Manually verify: creating, updating, deleting, and checking in a habit via REST each publish the expected event.
-- [ ] 5.4 Manually verify: `check_in_habit` via `/mcp` publishes the same event as its REST counterpart.
-- [ ] 5.5 Manually verify: `POST /pusher/auth` succeeds for a user's own channel, returns `403` for another user's channel, and `401` with no/invalid JWT.
-- [ ] 5.6 Manually verify: temporarily breaking the Pusher credentials does not cause `POST /tasks` (or any other mutation) to fail — the write still succeeds and only the publish fails (check logs).
-- [ ] 5.7 Re-run `add-mcp-server`'s existing manual-verification checklist (tasks.md section 5) to confirm the write-path refactor didn't regress MCP auth/behavior.
+- [x] 5.1 Manually verify: creating, updating (including a status change and a position change), and deleting a task via REST each publish the expected event (observe via Pusher's debug console or a temporary test subscriber).
+- [x] 5.2 Manually verify: `create_task` and `update_task` via `/mcp` each publish the same events as their REST counterparts.
+- [x] 5.3 Manually verify: creating, updating, deleting, and checking in a habit via REST each publish the expected event.
+- [x] 5.4 Manually verify: `check_in_habit` via `/mcp` publishes the same event as its REST counterpart.
+- [x] 5.5 Manually verify: `POST /pusher/auth` succeeds for a user's own channel, returns `403` for another user's channel, and `401` with no/invalid JWT.
+- [x] 5.6 Manually verify: temporarily breaking the Pusher credentials does not cause `POST /tasks` (or any other mutation) to fail — the write still succeeds and only the publish fails (check logs).
+- [x] 5.7 Re-run `add-mcp-server`'s existing manual-verification checklist (tasks.md section 5) to confirm the write-path refactor didn't regress MCP auth/behavior.
 - [x] 5.8 Run `npm run typecheck`.
