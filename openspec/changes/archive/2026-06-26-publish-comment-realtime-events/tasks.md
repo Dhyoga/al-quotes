@@ -20,6 +20,6 @@
 
 ## 4. Verification
 
-- [ ] 4.1 Manually verify (e.g. via Pusher debug console or a temporary subscriber script) that creating, editing, and deleting a comment emits `comment.created`/`comment.updated`/`comment.deleted` on `private-user-{userId}`
+- [x] 4.1 Manually verify (e.g. via Pusher debug console or a temporary subscriber script) that creating, editing, and deleting a comment emits `comment.created`/`comment.updated`/`comment.deleted` on `private-user-{userId}` (verified by user)
 - [x] 4.2 Confirm `comment.deleted` payload includes `taskId` (verified by code review — `comments-repository.ts`'s `deleteComment` publishes `{ id: commentId, taskId }`)
 - [x] 4.3 Confirm existing comment CRUD behavior (status codes, response bodies, 404s) is unchanged (verified by code review — route handlers keep the same status codes, ownership/existence checks, and response bodies)
