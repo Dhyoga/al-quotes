@@ -3,6 +3,7 @@ import { Priority, TaskStatus, type Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { requireJwt } from '../lib/auth.js';
 import { listTasksForUser, findTaskForUser, createTask, updateTask, deleteTask } from '../lib/tasks-repository.js';
+import { listCommentsForTask, createComment, updateComment, deleteComment } from '../lib/comments-repository.js';
 
 const VALID_STATUS = Object.values(TaskStatus);
 const VALID_PRIORITY = Object.values(Priority);
@@ -139,7 +140,7 @@ router
       const { body } = req.body;
       if (!body) return res.status(400).json({ message: 'body is required' });
 
-      const comment = await prisma.comment.create({ data: { taskId, body } });
+      const comment = await createComment(req.userId!, taskId, body);
       res.status(201).json(comment);
     } catch (error) {
       next(error);
@@ -151,10 +152,7 @@ router
       const task = await findTaskForUser(req.userId!, taskId);
       if (!task) return res.status(404).json({ message: 'Task not found' });
 
-      const comments = await prisma.comment.findMany({
-        where: { taskId },
-        orderBy: { createdAt: 'asc' },
-      });
+      const comments = await listCommentsForTask(taskId);
       res.json(comments);
     } catch (error) {
       next(error);
@@ -173,7 +171,7 @@ router
       const { body } = req.body;
       if (!body) return res.status(400).json({ message: 'body is required' });
 
-      const updated = await prisma.comment.update({ where: { id: commentId }, data: { body } });
+      const updated = await updateComment(req.userId!, taskId, commentId, body);
       res.json(updated);
     } catch (error) {
       next(error);
@@ -189,7 +187,7 @@ router
       const comment = await prisma.comment.findFirst({ where: { id: commentId, taskId } });
       if (!comment) return res.status(404).json({ message: 'Comment not found' });
 
-      await prisma.comment.delete({ where: { id: commentId } });
+      await deleteComment(req.userId!, taskId, commentId);
       res.status(204).end();
     } catch (error) {
       next(error);
