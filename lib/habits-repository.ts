@@ -1,7 +1,22 @@
-import type { Habit, Prisma } from '@prisma/client';
+import { CalendarEntityType, type Habit, type Prisma } from '@prisma/client';
 import prisma from './prisma.js';
 import { publishHabitEvent } from './pusher.js';
 import { computePeriodStart } from './period.js';
+import { syncUpsert, syncDelete, RRULE_BY_FREQUENCY } from './calendar-sync.js';
+
+const toCalendarPayload = (habit: Habit) => ({
+  title: habit.title,
+  description: habit.description,
+  priority: habit.priority,
+  frequency: habit.frequency,
+  rrule: RRULE_BY_FREQUENCY[habit.frequency],
+});
+
+const syncHabitToCalendar = (userId: string, habit: Habit): void => {
+  syncUpsert(userId, CalendarEntityType.habit, habit.id, toCalendarPayload(habit)).catch((error: unknown) => {
+    console.error('Failed to sync habit to calendar:', error);
+  });
+};
 
 const listHabitsForUser = (userId: string) => prisma.habit.findMany({ where: { userId } });
 
@@ -14,18 +29,30 @@ const createHabit = async (
 ) => {
   const habit = await prisma.habit.create({ data: { ...data, userId } });
   publishHabitEvent(userId, 'habit.created', habit);
+  syncHabitToCalendar(userId, habit);
   return habit;
 };
 
 const updateHabit = async (userId: string, id: number, data: Prisma.HabitUpdateInput) => {
   const habit = await prisma.habit.update({ where: { id }, data });
   publishHabitEvent(userId, 'habit.updated', habit);
+  syncHabitToCalendar(userId, habit);
   return habit;
 };
 
 const deleteHabit = async (userId: string, id: number) => {
+  const existingSync = await prisma.calendarSync.findUnique({
+    where: { entityType_entityId: { entityType: CalendarEntityType.habit, entityId: id } },
+  });
+
   await prisma.habit.delete({ where: { id } });
   publishHabitEvent(userId, 'habit.deleted', { id });
+
+  if (existingSync) {
+    syncDelete(userId, CalendarEntityType.habit, id, existingSync.googleEventId).catch((error: unknown) => {
+      console.error('Failed to sync habit deletion to calendar:', error);
+    });
+  }
 };
 
 const checkInHabit = async (userId: string, habit: Habit, date?: Date) => {

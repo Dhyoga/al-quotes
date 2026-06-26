@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { timingSafeEqual } from 'crypto';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import prisma from './prisma.js';
 import { isApiKeyShaped, hashApiKey, apiKeyExpiry } from './api-keys.js';
@@ -65,4 +66,25 @@ const requireApiKey = async (req: Request, res: Response, next: NextFunction): P
   next();
 };
 
-export { requireJwt, requireApiKey };
+// Authenticates a trusted service (n8n) calling al-quotes on its own behalf —
+// not a user, so this is intentionally separate from requireJwt/requireApiKey.
+const requireWebhookSecret = (req: Request, res: Response, next: NextFunction): void => {
+  const provided = req.headers['x-webhook-secret'];
+  const expected = process.env.WEBHOOK_SECRET;
+
+  // Length check first: timingSafeEqual throws on mismatched buffer lengths
+  // rather than returning false.
+  if (
+    typeof provided !== 'string' ||
+    !expected ||
+    provided.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(provided), Buffer.from(expected))
+  ) {
+    res.status(401).json({ message: 'Invalid webhook secret' });
+    return;
+  }
+
+  next();
+};
+
+export { requireJwt, requireApiKey, requireWebhookSecret };

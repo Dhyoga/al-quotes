@@ -1,6 +1,22 @@
-import { TaskStatus, type Prisma } from '@prisma/client';
+import { TaskStatus, CalendarEntityType, type Task, type Prisma } from '@prisma/client';
 import prisma from './prisma.js';
 import { publishTaskEvent } from './pusher.js';
+import { syncUpsert, syncDelete } from './calendar-sync.js';
+
+const toCalendarPayload = (task: Task) => ({
+  title: task.title,
+  description: task.description,
+  startDate: task.startDate?.toISOString() ?? null,
+  dueDate: task.dueDate?.toISOString() ?? null,
+  priority: task.priority,
+  status: task.status,
+});
+
+const syncTaskToCalendar = (userId: string, task: Task): void => {
+  syncUpsert(userId, CalendarEntityType.task, task.id, toCalendarPayload(task)).catch((error: unknown) => {
+    console.error('Failed to sync task to calendar:', error);
+  });
+};
 
 const listTasksForUser = (userId: string) =>
   prisma.task.findMany({
@@ -42,6 +58,7 @@ const createTask = async (userId: string, input: CreateTaskInput) => {
     },
   });
   publishTaskEvent(userId, 'task.created', task);
+  syncTaskToCalendar(userId, task);
   return task;
 };
 
@@ -71,12 +88,23 @@ const updateTask = async (userId: string, id: number, { data, statusTransition }
     task = await prisma.task.update({ where: { id }, data });
   }
   publishTaskEvent(userId, 'task.updated', task);
+  syncTaskToCalendar(userId, task);
   return task;
 };
 
 const deleteTask = async (userId: string, id: number) => {
+  const existingSync = await prisma.calendarSync.findUnique({
+    where: { entityType_entityId: { entityType: CalendarEntityType.task, entityId: id } },
+  });
+
   await prisma.task.delete({ where: { id } });
   publishTaskEvent(userId, 'task.deleted', { id });
+
+  if (existingSync) {
+    syncDelete(userId, CalendarEntityType.task, id, existingSync.googleEventId).catch((error: unknown) => {
+      console.error('Failed to sync task deletion to calendar:', error);
+    });
+  }
 };
 
 export { listTasksForUser, findTaskForUser, createTask, updateTask, deleteTask };

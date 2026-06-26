@@ -118,3 +118,27 @@ model ApiKey {
 
   @@index([userId])
 }
+
+model GoogleCalendarLink {
+  id           Int       @id @default(autoincrement())
+  userId       String    @unique
+  refreshToken String
+  calendarId   String    @default("primary")
+  connectedAt  DateTime  @default(now())
+  revokedAt    DateTime?
+}
+
+enum CalendarEntityType {
+  task
+  habit
+}
+
+model CalendarSync {
+  id            Int                @id @default(autoincrement())
+  entityType    CalendarEntityType
+  entityId      Int
+  googleEventId String
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([entityType, entityId])
+}
