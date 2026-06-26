@@ -2,8 +2,8 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Priority, TaskStatus, type Prisma } from '@prisma/client';
 import prisma from './prisma.js';
-import { findTaskForUser } from './tasks-repository.js';
-import { listHabitsForUser, findHabitForUser } from './habits-repository.js';
+import { findTaskForUser, createTask, updateTask } from './tasks-repository.js';
+import { listHabitsForUser, findHabitForUser, checkInHabit } from './habits-repository.js';
 import { computePeriodStart } from './period.js';
 
 const VALID_STATUS = Object.values(TaskStatus) as [string, ...string[]];
@@ -17,14 +17,6 @@ const toolError = (text: string) => ({
 const toolResult = (data: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(data) }],
 });
-
-const nextPosition = async (userId: string, status: TaskStatus): Promise<number> => {
-  const last = await prisma.task.findFirst({
-    where: { userId, status },
-    orderBy: { position: 'desc' },
-  });
-  return (last?.position ?? 0) + 1;
-};
 
 const registerTools = (server: McpServer, userId: string): void => {
   server.registerTool(
@@ -70,18 +62,12 @@ const registerTools = (server: McpServer, userId: string): void => {
       },
     },
     async ({ title, description, startDate, dueDate, priority }) => {
-      const position = await nextPosition(userId, TaskStatus.TODO);
-      const task = await prisma.task.create({
-        data: {
-          userId,
-          title,
-          description,
-          startDate: startDate ? new Date(startDate) : undefined,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
-          priority: priority as Priority | undefined,
-          status: TaskStatus.TODO,
-          position,
-        },
+      const task = await createTask(userId, {
+        title,
+        description,
+        startDate: startDate ? new Date(startDate) : undefined,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        priority: priority as Priority | undefined,
       });
       return toolResult(task);
     }
@@ -112,21 +98,13 @@ const registerTools = (server: McpServer, userId: string): void => {
       if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
       if (priority !== undefined) data.priority = priority as Priority | null;
 
-      if (status !== undefined && status !== existing.status) {
-        const task = await prisma.$transaction(async (tx) => {
-          const updated = await tx.task.update({
-            where: { id },
-            data: { ...data, status: status as TaskStatus },
-          });
-          await tx.taskStatusHistory.create({
-            data: { taskId: id, fromStatus: existing.status, toStatus: status as TaskStatus },
-          });
-          return updated;
-        });
-        return toolResult(task);
-      }
-
-      const task = await prisma.task.update({ where: { id }, data });
+      const task = await updateTask(userId, id, {
+        data,
+        statusTransition:
+          status !== undefined && status !== existing.status
+            ? { fromStatus: existing.status, toStatus: status as TaskStatus }
+            : undefined,
+      });
       return toolResult(task);
     }
   );
@@ -147,12 +125,7 @@ const registerTools = (server: McpServer, userId: string): void => {
       const habit = await findHabitForUser(userId, habitId);
       if (!habit) return toolError(`No habit found with id ${habitId}.`);
 
-      const periodStart = computePeriodStart(habit.frequency, date ? new Date(date) : undefined);
-      const checkIn = await prisma.habitCheckIn.upsert({
-        where: { habitId_periodStart: { habitId, periodStart } },
-        update: {},
-        create: { habitId, periodStart, completed: true },
-      });
+      const checkIn = await checkInHabit(userId, habit, date ? new Date(date) : undefined);
       return toolResult(checkIn);
     }
   );

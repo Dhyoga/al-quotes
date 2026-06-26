@@ -29,8 +29,8 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Manually verify: generate a key via JWT, call `/tasks` with the key, confirm it succeeds and `lastUsedAt`/`expiresAt` update in the DB
-- [ ] 5.2 Manually verify: revoke a key, confirm subsequent requests with it return `401`
-- [ ] 5.3 Manually verify: attempt `POST /auth/api-keys` using an API key instead of a JWT, confirm `401`
-- [ ] 5.4 Manually verify: existing extension login/JWT flow against `/tasks` and `/habits` still works unchanged
+- [x] 5.1 Manually verify: generate a key via JWT, call `/tasks` with the key, confirm it succeeds and `lastUsedAt`/`expiresAt` update in the DB
+- [x] 5.2 Manually verify: revoke a key, confirm subsequent requests with it return `401`
+- [x] 5.3 Manually verify: attempt `POST /auth/api-keys` using an API key instead of a JWT, confirm `401`
+- [x] 5.4 Manually verify: existing extension login/JWT flow against `/tasks` and `/habits` still works unchanged
 - [x] 5.5 Run `npm run typecheck`

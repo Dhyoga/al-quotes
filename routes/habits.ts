@@ -2,8 +2,14 @@ import express from 'express';
 import { HabitFrequency, Priority, type Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { requireJwt } from '../lib/auth.js';
-import { listHabitsForUser, findHabitForUser } from '../lib/habits-repository.js';
-import { computePeriodStart } from '../lib/period.js';
+import {
+  listHabitsForUser,
+  findHabitForUser,
+  createHabit,
+  updateHabit,
+  deleteHabit,
+  checkInHabit,
+} from '../lib/habits-repository.js';
 
 const VALID_FREQUENCY = Object.values(HabitFrequency);
 const VALID_PRIORITY = Object.values(Priority);
@@ -26,9 +32,7 @@ router
         return res.status(400).json({ message: 'Invalid priority' });
       }
 
-      const habit = await prisma.habit.create({
-        data: { userId: req.userId!, title, description, priority, frequency },
-      });
+      const habit = await createHabit(req.userId!, { title, description, priority, frequency });
       res.status(201).json(habit);
     } catch (error) {
       next(error);
@@ -72,7 +76,7 @@ router
       if (priority !== undefined) data.priority = priority;
       if (frequency !== undefined) data.frequency = frequency;
 
-      const habit = await prisma.habit.update({ where: { id }, data });
+      const habit = await updateHabit(req.userId!, id, data);
       res.json(habit);
     } catch (error) {
       next(error);
@@ -83,7 +87,7 @@ router
       const id = Number(req.params.id);
       const existing = await findHabitForUser(req.userId!, id);
       if (!existing) return res.status(404).json({ message: 'Habit not found' });
-      await prisma.habit.delete({ where: { id } });
+      await deleteHabit(req.userId!, id);
       res.status(204).end();
     } catch (error) {
       next(error);
@@ -95,13 +99,7 @@ router
       const habit = await findHabitForUser(req.userId!, id);
       if (!habit) return res.status(404).json({ message: 'Habit not found' });
 
-      const periodStart = computePeriodStart(habit.frequency);
-
-      const checkIn = await prisma.habitCheckIn.upsert({
-        where: { habitId_periodStart: { habitId: id, periodStart } },
-        update: {},
-        create: { habitId: id, periodStart, completed: true },
-      });
+      const checkIn = await checkInHabit(req.userId!, habit);
       res.status(201).json(checkIn);
     } catch (error) {
       next(error);

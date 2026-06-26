@@ -2,21 +2,13 @@ import express from 'express';
 import { Priority, TaskStatus, type Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { requireJwt } from '../lib/auth.js';
-import { listTasksForUser, findTaskForUser } from '../lib/tasks-repository.js';
+import { listTasksForUser, findTaskForUser, createTask, updateTask, deleteTask } from '../lib/tasks-repository.js';
 
 const VALID_STATUS = Object.values(TaskStatus);
 const VALID_PRIORITY = Object.values(Priority);
 
 const router = express.Router();
 router.use(requireJwt);
-
-const nextPosition = async (userId: string, status: TaskStatus): Promise<number> => {
-  const last = await prisma.task.findFirst({
-    where: { userId, status },
-    orderBy: { position: 'desc' },
-  });
-  return (last?.position ?? 0) + 1;
-};
 
 router
   .post('/', async (req, res, next) => {
@@ -30,18 +22,12 @@ router
         return res.status(400).json({ message: 'Invalid priority' });
       }
 
-      const position = await nextPosition(req.userId!, TaskStatus.TODO);
-      const task = await prisma.task.create({
-        data: {
-          userId: req.userId!,
-          title,
-          description,
-          startDate: startDate ? new Date(startDate) : undefined,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
-          priority,
-          status: 'TODO',
-          position,
-        },
+      const task = await createTask(req.userId!, {
+        title,
+        description,
+        startDate: startDate ? new Date(startDate) : undefined,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        priority,
       });
       res.status(201).json(task);
     } catch (error) {
@@ -87,18 +73,13 @@ router
       if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
       if (priority !== undefined) data.priority = priority;
 
-      if (status !== undefined && status !== existing.status) {
-        const task = await prisma.$transaction(async (tx) => {
-          const updated = await tx.task.update({ where: { id }, data: { ...data, status } });
-          await tx.taskStatusHistory.create({
-            data: { taskId: id, fromStatus: existing.status, toStatus: status },
-          });
-          return updated;
-        });
-        return res.json(task);
-      }
-
-      const task = await prisma.task.update({ where: { id }, data });
+      const task = await updateTask(req.userId!, id, {
+        data,
+        statusTransition:
+          status !== undefined && status !== existing.status
+            ? { fromStatus: existing.status, toStatus: status }
+            : undefined,
+      });
       res.json(task);
     } catch (error) {
       next(error);
@@ -132,7 +113,7 @@ router
         }
       }
 
-      const task = await prisma.task.update({ where: { id }, data: { position: newPosition } });
+      const task = await updateTask(req.userId!, id, { data: { position: newPosition } });
       res.json(task);
     } catch (error) {
       next(error);
@@ -143,7 +124,7 @@ router
       const id = Number(req.params.id);
       const existing = await findTaskForUser(req.userId!, id);
       if (!existing) return res.status(404).json({ message: 'Task not found' });
-      await prisma.task.delete({ where: { id } });
+      await deleteTask(req.userId!, id);
       res.status(204).end();
     } catch (error) {
       next(error);

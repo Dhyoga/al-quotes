@@ -27,9 +27,9 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Manually verify: generate a key via `/auth/api-keys`, call a tool on `/mcp` with it, confirm success and `lastUsedAt`/`expiresAt` update
-- [ ] 5.2 Manually verify: same key against `/tasks` or `/habits` directly now returns `401`
-- [ ] 5.3 Manually verify: a JWT (no API key) against `/mcp` returns `401`
-- [ ] 5.4 Manually verify: revoked key is rejected on `/mcp`
-- [ ] 5.5 Manually verify `get_today_overview` against seeded tasks/habits returns the expected combined shape
-- [ ] 5.6 Run `npm run typecheck`
+- [x] 5.1 Manually verify: generate a key via `/auth/api-keys`, call a tool on `/mcp` with it, confirm success and `lastUsedAt`/`expiresAt` update
+- [x] 5.2 Manually verify: same key against `/tasks` or `/habits` directly now returns `401`
+- [x] 5.3 Manually verify: a JWT (no API key) against `/mcp` returns `401`
+- [x] 5.4 Manually verify: revoked key is rejected on `/mcp`
+- [x] 5.5 Manually verify `get_today_overview` against seeded tasks/habits returns the expected combined shape
+- [x] 5.6 Run `npm run typecheck`

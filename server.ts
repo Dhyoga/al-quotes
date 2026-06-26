@@ -7,6 +7,7 @@ import tasksRoutes from './routes/tasks.js';
 import habitsRoutes from './routes/habits.js';
 import apiKeysRoutes from './routes/api-keys.js';
 import mcpRoutes from './routes/mcp.js';
+import pusherAuthRoutes from './routes/pusher-auth.js';
 import express, { type Request, type Response, type NextFunction } from 'express';
 
 const app = express();
@@ -22,9 +23,9 @@ app.use(
     })
 );
 
-// Tasks, Habits & API key management butuh write methods, dibatasi ke origin extension saja
+// Tasks, Habits, API key management & Pusher channel auth butuh write methods, dibatasi ke origin extension saja
 app.use(
-    ['/tasks', '/habits', '/auth/api-keys'],
+    ['/tasks', '/habits', '/auth/api-keys', '/pusher/auth'],
     cors({
         origin: process.env.EXTENSION_ORIGIN || false,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -33,6 +34,8 @@ app.use(
 );
 
 app.use(bodyParser.json());
+// pusher-js's default auth transport posts socket_id/channel_name as form-encoded, not JSON
+app.use('/pusher/auth', bodyParser.urlencoded({ extended: true }));
 
 app.use('/quotes', quotesRoutes);
 app.use('/pictures', picturesRoutes);
@@ -40,6 +43,7 @@ app.use('/tasks', tasksRoutes);
 app.use('/habits', habitsRoutes);
 app.use('/auth/api-keys', apiKeysRoutes);
 app.use('/mcp', mcpRoutes);
+app.use('/pusher/auth', pusherAuthRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Remindeen API');
