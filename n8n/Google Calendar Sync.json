@@ -1,0 +1,363 @@
+{
+  "name": "Google Calendar Sync",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Before running this\n\n1. Create an **HTTP Header Auth** credential named `Webhook Secret`:\n   - Header Name: `X-Webhook-Secret`\n   - Header Value: same value as al-quotes' `WEBHOOK_SECRET` env var\n2. Assign that credential to: **Webhook**, **Callback: Linked**, **Callback: Unlinked**\n3. Replace the placeholder URL in **Callback: Linked** and **Callback: Unlinked** with your real al-quotes URL, e.g. `https://<your-al-quotes-domain>/webhooks/n8n/calendar-sync`\n4. Activate the workflow, copy the **production** webhook URL from the **Webhook** node, and set it as al-quotes' `CALENDAR_WEBHOOK_URL` env var\n\nHabit events get a default 1-hour block starting at the moment the workflow runs, repeating via RRULE — adjust the expression in **Insert Event** / **Patch Event** if you want a fixed time of day instead.",
+        "height": 532,
+        "width": 460
+      },
+      "id": "659fef60-fe9d-4a2d-aa25-b795e2755964",
+      "name": "Read Me",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        -624
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.body.event.includes('upserted') }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "6df17622-dfe3-4a30-89c9-e42fff3c6056",
+      "name": "Is Upsert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ !!$json.body.googleEventId }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "5e1e6631-5ae5-471a-ab19-cd1ebeec2a41",
+      "name": "Has Google Event Id?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ $json.body.calendarId }}/events",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.body.googleAccessToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.habit.description,\n  start: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.startDate || $json.body.task.dueDate) : $now.toISO(),\n    timeZone: 'UTC'\n  },\n  end: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.dueDate || $json.body.task.startDate) : $now.plus({ hours: 1 }).toISO(),\n    timeZone: 'UTC'\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : undefined\n} }}",
+        "options": {}
+      },
+      "id": "33970951-7a77-428e-bc3a-9f108549f5e5",
+      "name": "Insert Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        336,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ $json.body.calendarId }}/events/{{ $json.body.googleEventId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.body.googleAccessToken }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.habit.description,\n  start: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.startDate || $json.body.task.dueDate) : $now.toISO(),\n    timeZone: 'UTC'\n  },\n  end: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.dueDate || $json.body.task.startDate) : $now.plus({ hours: 1 }).toISO(),\n    timeZone: 'UTC'\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : undefined\n} }}",
+        "options": {}
+      },
+      "id": "5933c131-334f-48c8-8672-60a3a3a1587d",
+      "name": "Patch Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "=https://www.googleapis.com/calendar/v3/calendars/{{ $json.body.calendarId }}/events/{{ $json.body.googleEventId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.body.googleAccessToken }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "787cbd80-e7d0-41ab-a21a-db5d14d38b29",
+      "name": "Delete Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        64,
+        384
+      ],
+      "notesInFlow": true,
+      "continueOnFail": true,
+      "notes": "continueOnFail=true: Google returns 404/410 if the event is already gone — that should still count as successfully unlinked, not a workflow failure."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quotes.serdadu.dev/webhooks/n8n/calendar-sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  action: 'linked',\n  entityType: $('Webhook').item.json.body.entityType,\n  entityId:   $('Webhook').item.json.body.entityId,\n  googleEventId: $json.id\n} }}",
+        "options": {}
+      },
+      "id": "6d2d6e84-60c2-4fe4-8769-1784501c6f93",
+      "name": "Callback: Linked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        32
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jwfccwUa3AAAlh56",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://quotes.serdadu.dev/webhooks/n8n/calendar-sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  action: 'unlinked',\n  entityType: $('Webhook').item.json.body.entityType,\n  entityId:   $('Webhook').item.json.body.entityId\n} }}",
+        "options": {}
+      },
+      "id": "108bc849-a5ec-4a67-b2f4-37192a735551",
+      "name": "Callback: Unlinked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        384
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jwfccwUa3AAAlh56",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true } }}",
+        "options": {}
+      },
+      "id": "c77bc742-a9b2-4771-a0a0-da553892240f",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "calendar-sync",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0fdc3fcc-9954-4cd1-b40d-536c37fc273b",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        160
+      ],
+      "webhookId": "remindeen-calendar-sync",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jwfccwUa3AAAlh56",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Is Upsert?": {
+      "main": [
+        [
+          {
+            "node": "Has Google Event Id?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Google Event Id?": {
+      "main": [
+        [
+          {
+            "node": "Patch Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Event": {
+      "main": [
+        [
+          {
+            "node": "Callback: Linked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Patch Event": {
+      "main": [
+        [
+          {
+            "node": "Callback: Linked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Event": {
+      "main": [
+        [
+          {
+            "node": "Callback: Unlinked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback: Linked": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback: Unlinked": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is Upsert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a20e6a1a-9246-4762-9539-2445ef871c23",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "79082acf71255b98a80331825292b423065c60246bb8eef9e99617f14cbc2a00"
+  },
+  "nodeGroups": [],
+  "id": "S9DzbaUR2aOzbzeX",
+  "tags": []
+}

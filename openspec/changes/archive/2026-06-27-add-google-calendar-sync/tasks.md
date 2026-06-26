@@ -44,8 +44,8 @@
 
 ## 8. Verification
 
-- [ ] 8.1 Manually verify: linking a calendar, creating a task, confirming a sync job lands in QStash's dashboard with the expected payload
-- [ ] 8.2 Manually verify: a user with no calendar link triggers no sync job on task/habit mutation
-- [ ] 8.3 Manually verify: `POST /webhooks/n8n/calendar-sync` rejects requests without the correct `X-Webhook-Secret`
-- [ ] 8.4 Manually verify: deleting a previously-synced task publishes a `task.deleted` job with a non-null `googleEventId`
-- [ ] 8.5 Manually verify: checking in a habit does not publish any sync job
+- [x] 8.1 Manually verify: linking a calendar, creating a task, confirming a sync job lands in QStash's dashboard with the expected payload
+- [x] 8.2 Manually verify: a user with no calendar link triggers no sync job on task/habit mutation
+- [x] 8.3 Manually verify: `POST /webhooks/n8n/calendar-sync` rejects requests without the correct `X-Webhook-Secret`
+- [x] 8.4 Manually verify: deleting a previously-synced task publishes a `task.deleted` job with a non-null `googleEventId`
+- [x] 8.5 Manually verify: checking in a habit does not publish any sync job
