@@ -14,13 +14,16 @@ router.use(requireJwt);
 router
   .post('/', async (req, res, next) => {
     try {
-      const { title, description, startDate, dueDate, priority } = req.body;
+      const { title, description, startDate, dueDate, priority, syncToCalendar } = req.body;
 
       if (!title) {
         return res.status(400).json({ message: 'title is required' });
       }
       if (priority !== undefined && priority !== null && !VALID_PRIORITY.includes(priority)) {
         return res.status(400).json({ message: 'Invalid priority' });
+      }
+      if (syncToCalendar !== undefined && typeof syncToCalendar !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid syncToCalendar' });
       }
 
       const task = await createTask(req.userId!, {
@@ -29,6 +32,7 @@ router
         startDate: startDate ? new Date(startDate) : undefined,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         priority,
+        syncToCalendar,
       });
       res.status(201).json(task);
     } catch (error) {
@@ -58,13 +62,16 @@ router
       const existing = await findTaskForUser(req.userId!, id);
       if (!existing) return res.status(404).json({ message: 'Task not found' });
 
-      const { title, description, startDate, dueDate, priority, status } = req.body;
+      const { title, description, startDate, dueDate, priority, status, syncToCalendar } = req.body;
 
       if (priority !== undefined && priority !== null && !VALID_PRIORITY.includes(priority)) {
         return res.status(400).json({ message: 'Invalid priority' });
       }
       if (status !== undefined && !VALID_STATUS.includes(status)) {
         return res.status(400).json({ message: 'Invalid status' });
+      }
+      if (syncToCalendar !== undefined && typeof syncToCalendar !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid syncToCalendar' });
       }
 
       const data: Prisma.TaskUpdateInput = {};
@@ -73,6 +80,7 @@ router
       if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null;
       if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
       if (priority !== undefined) data.priority = priority;
+      if (syncToCalendar !== undefined) data.syncToCalendar = syncToCalendar;
 
       const task = await updateTask(req.userId!, id, {
         data,
@@ -80,6 +88,7 @@ router
           status !== undefined && status !== existing.status
             ? { fromStatus: existing.status, toStatus: status }
             : undefined,
+        previousSyncToCalendar: existing.syncToCalendar,
       });
       res.json(task);
     } catch (error) {

@@ -50,6 +50,7 @@ model Task {
   priority    Priority?
   status      TaskStatus @default(TODO)
   position    Float
+  syncToCalendar Boolean @default(false)
   comments    Comment[]
   statusHistory TaskStatusHistory[]
   createdAt   DateTime   @default(now())

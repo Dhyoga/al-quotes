@@ -59,15 +59,17 @@ const registerTools = (server: McpServer, userId: string): void => {
         startDate: z.string().datetime().optional(),
         dueDate: z.string().datetime().optional(),
         priority: z.enum(VALID_PRIORITY).optional(),
+        syncToCalendar: z.boolean().optional(),
       },
     },
-    async ({ title, description, startDate, dueDate, priority }) => {
+    async ({ title, description, startDate, dueDate, priority, syncToCalendar }) => {
       const task = await createTask(userId, {
         title,
         description,
         startDate: startDate ? new Date(startDate) : undefined,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         priority: priority as Priority | undefined,
+        syncToCalendar,
       });
       return toolResult(task);
     }
@@ -85,9 +87,10 @@ const registerTools = (server: McpServer, userId: string): void => {
         dueDate: z.string().datetime().nullable().optional(),
         priority: z.enum(VALID_PRIORITY).nullable().optional(),
         status: z.enum(VALID_STATUS).optional(),
+        syncToCalendar: z.boolean().optional(),
       },
     },
-    async ({ id, title, description, startDate, dueDate, priority, status }) => {
+    async ({ id, title, description, startDate, dueDate, priority, status, syncToCalendar }) => {
       const existing = await findTaskForUser(userId, id);
       if (!existing) return toolError(`No task found with id ${id}.`);
 
@@ -97,6 +100,7 @@ const registerTools = (server: McpServer, userId: string): void => {
       if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null;
       if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
       if (priority !== undefined) data.priority = priority as Priority | null;
+      if (syncToCalendar !== undefined) data.syncToCalendar = syncToCalendar;
 
       const task = await updateTask(userId, id, {
         data,
@@ -104,6 +108,7 @@ const registerTools = (server: McpServer, userId: string): void => {
           status !== undefined && status !== existing.status
             ? { fromStatus: existing.status, toStatus: status as TaskStatus }
             : undefined,
+        previousSyncToCalendar: existing.syncToCalendar,
       });
       return toolResult(task);
     }

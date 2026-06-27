@@ -12,10 +12,28 @@ const toCalendarPayload = (task: Task) => ({
   status: task.status,
 });
 
-const syncTaskToCalendar = (userId: string, task: Task): void => {
-  syncUpsert(userId, CalendarEntityType.task, task.id, toCalendarPayload(task)).catch((error: unknown) => {
-    console.error('Failed to sync task to calendar:', error);
-  });
+const syncTaskToCalendar = (userId: string, task: Task, previousSyncToCalendar?: boolean): void => {
+  if (task.syncToCalendar) {
+    syncUpsert(userId, CalendarEntityType.task, task.id, toCalendarPayload(task)).catch((error: unknown) => {
+      console.error('Failed to sync task to calendar:', error);
+    });
+    return;
+  }
+
+  // Flag was just turned off: remove the event it previously had, if any,
+  // so it doesn't linger stale in the user's calendar.
+  if (previousSyncToCalendar) {
+    prisma.calendarSync
+      .findUnique({ where: { entityType_entityId: { entityType: CalendarEntityType.task, entityId: task.id } } })
+      .then((existingSync) => {
+        if (existingSync) {
+          return syncDelete(userId, CalendarEntityType.task, task.id, existingSync.googleEventId);
+        }
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to remove task from calendar:', error);
+      });
+  }
 };
 
 const listTasksForUser = (userId: string) =>
@@ -41,6 +59,7 @@ interface CreateTaskInput {
   startDate?: Date;
   dueDate?: Date;
   priority?: Prisma.TaskCreateInput['priority'];
+  syncToCalendar?: boolean;
 }
 
 const createTask = async (userId: string, input: CreateTaskInput) => {
@@ -55,6 +74,7 @@ const createTask = async (userId: string, input: CreateTaskInput) => {
       priority: input.priority,
       status: TaskStatus.TODO,
       position,
+      syncToCalendar: input.syncToCalendar ?? false,
     },
   });
   publishTaskEvent(userId, 'task.created', task);
@@ -65,9 +85,14 @@ const createTask = async (userId: string, input: CreateTaskInput) => {
 interface UpdateTaskInput {
   data: Prisma.TaskUpdateInput;
   statusTransition?: { fromStatus: TaskStatus; toStatus: TaskStatus };
+  previousSyncToCalendar?: boolean;
 }
 
-const updateTask = async (userId: string, id: number, { data, statusTransition }: UpdateTaskInput) => {
+const updateTask = async (
+  userId: string,
+  id: number,
+  { data, statusTransition, previousSyncToCalendar }: UpdateTaskInput
+) => {
   let task;
   if (statusTransition) {
     task = await prisma.$transaction(async (tx) => {
@@ -88,7 +113,7 @@ const updateTask = async (userId: string, id: number, { data, statusTransition }
     task = await prisma.task.update({ where: { id }, data });
   }
   publishTaskEvent(userId, 'task.updated', task);
-  syncTaskToCalendar(userId, task);
+  syncTaskToCalendar(userId, task, previousSyncToCalendar);
   return task;
 };
 
