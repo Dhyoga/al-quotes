@@ -78,3 +78,25 @@
 - [ ] 7.7 Re-import/update the workflow in the n8n instance and confirm it's active
 - [ ] 7.8 Manual test: with Google Calendar connected, create a recurring event with `syncToCalendar: true` → confirm the n8n execution succeeds (no `.includes` crash on a non-string `action`), the Google Calendar event is created with the correct title/time/recurrence, and the `linked` callback sets `CalendarSync.googleEventId`
 - [ ] 7.9 Manual test: create a non-recurring event and a recurring one back-to-back → confirm neither crashes the workflow and both produce correctly-shaped Google Calendar events
+
+## 8. MCP Tool Support for Events
+
+- [x] 8.1 Add `rrule` to `package.json` dependencies
+- [x] 8.2 Create `lib/recurrence.ts` exporting `getEventOccurrencesInRange(event, start: Date, end: Date): Date[]`, using `rrulestr(event.rrule, { dtstart: new Date(event.startAt) }).between(start, end, true)` for recurring events; wrap parsing in try/catch and return `[]` (plus `console.error`) on a malformed `rrule` instead of throwing
+- [x] 8.3 In `lib/mcp-tools.ts`, register `list_events`: no input parameters, calls `listEventsForUser(userId)`
+- [x] 8.4 Register `create_event`: zod schema with `title` (required, min 1), `description`/`location` (optional), `startAt`/`endAt` (`z.string().datetime({ offset: true })`, `startAt` required), `isRecurring` (optional boolean), `rrule` (optional string), `syncToCalendar` (optional boolean); inline check that `rrule` is present when `isRecurring` is true (mirroring `routes/events.ts`), returning a `toolError` if not; calls `createEvent`
+- [x] 8.5 Register `update_event`: zod schema mirrors `create_event` but all fields optional plus required `id`; verify ownership via `findEventForUser` first (`toolError` if not found); merge-with-existing `isRecurring`/`rrule` check identical to `routes/events.ts`'s PATCH handler; calls `updateEvent`
+- [x] 8.6 Register `delete_event`: input `{ id: z.number().int() }`; verify ownership via `findEventForUser` first (`toolError` if not found); calls `deleteEvent`; returns `toolResult({ id, deleted: true })`
+- [x] 8.7 Extend `get_today_overview`: compute UTC day window (reuse existing `startOfDay`/`endOfDay`); for each of the user's events, include it in `eventsToday` if non-recurring and `startAt` falls in the window, or if recurring and `getEventOccurrencesInRange` returns at least one occurrence in the window; add `eventsToday` to the returned object alongside `tasksDueToday`/`habitsPendingCheckIn`
+- [x] 8.8 Rewrite the `Purpose` section of `openspec/specs/mcp-server/spec.md` (currently a TBD stub left over from the original MCP change) to describe the full tool surface across tasks, habits, and events
+
+## 9. Manual Testing — MCP Tools
+
+- [ ] 9.1 `list_events` via an MCP client returns only the authenticated user's events
+- [ ] 9.2 `create_event` with a recurring event and valid RRULE → confirm it's created and visible via `GET /events`
+- [ ] 9.3 `create_event` with `isRecurring: true` and no `rrule` → confirm a tool error, no event created
+- [ ] 9.4 `update_event` on another user's event id → confirm a tool error, no change made
+- [ ] 9.5 `delete_event` on an owned event → confirm it's removed and a `toolResult({ id, deleted: true })` is returned
+- [ ] 9.6 `delete_event` on another user's event id → confirm a tool error, event not deleted
+- [ ] 9.7 `get_today_overview` with a one-time event today, a recurring event occurring today, and a recurring event not occurring today → confirm `eventsToday` includes the first two and excludes the third
+- [ ] 9.8 `get_today_overview` with an event whose stored `rrule` is malformed → confirm the call still succeeds and returns `tasksDueToday`/`habitsPendingCheckIn` correctly, skipping just that event

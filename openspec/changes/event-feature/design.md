@@ -90,6 +90,38 @@ This works for `task`/`habit` because neither collides with the literal key `eve
 
 Alternative considered: keep the action field named `event` and rename the event-entity payload key to something else (e.g. `acara`) to dodge the collision. Rejected — it would make `acara` the only non-English identifier in an otherwise fully English codebase, just to work around a naming accident.
 
+### MCP tool surface: full CRUD parity for events, including delete
+
+`list_tasks`/`create_task`/`update_task` and `list_habits`/`check_in_habit` are the existing MCP tool surface — notably, neither task nor habit exposes a delete tool, even though `deleteTask` exists in the repository. Events break that precedent deliberately: `list_events`, `create_event`, `update_event`, and `delete_event` are all registered. Tasks/habits are typically resolved by completing or archiving them; events are calendar entries a user is more likely to need to outright remove (wrong date entered, plans cancelled), so an LLM-driven caller needs delete access to be useful for event management.
+
+`list_events` takes no filter parameters (unlike `list_tasks`, which accepts `status`/`dueBefore`/`dueAfter`). This mirrors `list_habits` rather than `list_tasks`, and is consistent with the events feature's own non-goal of date-range querying in this version — giving the MCP tool filtering that `GET /events` itself doesn't have would be a new, unrequested capability.
+
+### `startAt`/`endAt` validated strictly in MCP tool schemas, diverging from the HTTP route
+
+`routes/events.ts` never validates the format of `startAt`/`endAt` — it passes whatever string arrives straight through to the `String` columns and downstream to Google Calendar. The MCP tool schemas use `z.string().datetime({ offset: true })` instead, which is stricter than the route. This is a deliberate, acknowledged divergence: LLM-generated input is exactly the kind of unstructured input datetime validation exists to catch, and a malformed `startAt` silently breaking calendar sync is worse than rejecting it at the MCP boundary with a clear tool error.
+
+`isRecurring`/`rrule` cross-field validation is done as a manual inline check in the tool handler (mirroring the `if (isRecurring && !rrule)` pattern in `routes/events.ts`, including the merge-with-existing logic `update_event` needs), not a zod `.refine()` — consistent with how the rest of `lib/mcp-tools.ts` already handles validation that doesn't fit cleanly into a per-field schema.
+
+### `get_today_overview` gains `eventsToday` via a new `lib/recurrence.ts`
+
+Non-recurring events use the same UTC-day-window check tasks already use for `dueDate`. Recurring events need RRULE expansion, which nothing in this codebase does today — `buildHabitRrule` in `lib/calendar-sync.ts` only *generates* RRULE strings, never parses them. The stored RRULE strings (for both habits and events) never carry `DTSTART`, so expansion requires supplying `dtstart` separately from `event.startAt`:
+
+```ts
+rrulestr(event.rrule, { dtstart: new Date(event.startAt) }).between(start, end, true)
+```
+
+This lands in a new `lib/recurrence.ts` exporting a general-purpose `getEventOccurrencesInRange(event, start, end)`, rather than a single-purpose boolean check — `lib/period.ts` already establishes the pattern of a standalone helper module for date/recurrence math, and a range-based API leaves a clean reuse hook (e.g. a future remindeen "today" or date-range view) without requiring a second helper later.
+
+New dependency: `rrule` (npm). Lightweight, no heavy transitive deps, ESM-compatible — fits the project's `"type": "module"` setup.
+
+**Timezone caveat, inherited not introduced:** `event.startAt` is offset-aware, but once parsed into a `Date` it collapses to a UTC instant, and `get_today_overview`'s "today" window is already plain UTC day boundaries (`startOfDay.setUTCHours(0,0,0,0)`) for tasks. Events join that existing imprecision rather than introducing a new one — a recurring event very near a day boundary could in theory land on the "wrong" UTC day, same class of edge case that already exists for task due-dates today. Accepted, not fixed, in this change.
+
+**Malformed RRULE strings must not break the whole response:** `routes/events.ts` only checks `rrule` is truthy, never that it's syntactically valid RRULE syntax — so a bad string could already exist in the DB before this change ships. `rrulestr()` throws on invalid input. Expansion is wrapped in a per-event try/catch that skips and logs the offending event rather than letting one bad RRULE take down `tasksDueToday`/`habitsPendingCheckIn` alongside it — same defensive posture as the existing fire-and-forget calendar-sync error swallowing elsewhere in the codebase.
+
+### Ownership checks must be replicated by the MCP tool handlers, not assumed
+
+`updateEvent`/`deleteEvent` in `lib/events-repository.ts` do **not** filter by `userId` at the Prisma level (`prisma.event.delete({ where: { id } })`) — ownership is enforced entirely by the caller doing `findEventForUser(userId, id)` first and only proceeding if found. `routes/events.ts` gets this right today via its 404-before-mutate pattern. `update_event` and `delete_event` MCP tools must replicate that exact pre-check (same `findEventForUser`-then-`toolError` pattern `update_task` already uses) or they become a cross-user data hole. `delete_event` returns `toolResult({ id, deleted: true })` after that check succeeds — there's no existing delete-tool precedent to mirror, since this is the first one.
+
 ### n8n workflow needs an explicit `event` branch
 
 `al-quotes/n8n/Google Calendar Sync.json`'s **"Insert Event"** and **"Patch Event"** nodes build the Google Calendar API body with a binary ternary: `entityType === 'task' ? task.* : habit.*`. There is no third branch, so an `event` payload would silently fall into the habit branch: `summary`/`description` would read `undefined` (`habit.title`/`habit.description` instead of `event.title`/`event.description`), `start`/`end` would use `$now.toISO()` / `$now.plus({hours:1})` instead of `event.startAt`/`event.endAt`, and `recurrence` would stay `undefined` even for a recurring event (the existing check is `entityType === 'habit'` only).

@@ -11,6 +11,7 @@ The app currently tracks recurring habits and one-off tasks, but has no way to r
 - Editing or deleting a recurring event always operates on the full series (no single-occurrence editing in this version).
 - Real-time events published on create, update, and delete via Pusher (same pattern as habits and tasks).
 - New `lib/events-repository.ts` with `listEventsForUser`, `findEventForUser`, `createEvent`, `updateEvent`, `deleteEvent`.
+- Add MCP tools `list_events`, `create_event`, `update_event`, `delete_event` so an LLM-driven MCP client gets the same CRUD access to events that it already has for tasks and habits, and fold events into `get_today_overview`'s combined response.
 
 ## Capabilities
 
@@ -19,6 +20,7 @@ The app currently tracks recurring habits and one-off tasks, but has no way to r
 
 ### Modified Capabilities
 - `google-calendar-sync`: sync pipeline now also handles `event` entity type in addition to tasks and habits; `CalendarEntityType` enum gains `event` value
+- `mcp-server`: tool surface gains `list_events`/`create_event`/`update_event`/`delete_event`; `get_today_overview` gains an `eventsToday` field covering both one-time and recurring events occurring in the current UTC day
 
 ## Impact
 
@@ -29,3 +31,7 @@ The app currently tracks recurring habits and one-off tasks, but has no way to r
 - `lib/calendar-sync.ts` — `event` entity type wired into sync helpers; the action-string field in `syncUpsert`/`syncDelete` is renamed from `event` to `action` to avoid colliding with the `[entityType]: entityPayload` key when `entityType === 'event'` (see design.md)
 - `al-quotes/n8n/Google Calendar Sync.json` — add an `entityType === 'event'` branch to the **Insert Event**/**Patch Event** nodes (title/description/location/start/end/recurrence sourced from the event payload instead of falling through to the habit branch), and update **Is Upsert?** to read the renamed `action` field (see design.md)
 - `lib/pusher.ts` — add `publishEventEvent` function (or reuse existing pattern)
+- `lib/mcp-tools.ts` — register `list_events`/`create_event`/`update_event`/`delete_event`; extend `get_today_overview` with `eventsToday`
+- `lib/recurrence.ts` — new file, `getEventOccurrencesInRange(event, start, end)` RRULE expansion helper
+- `package.json` — new dependency: `rrule`
+- `openspec/specs/mcp-server/spec.md` — Purpose line (currently a TBD stub left over from the original MCP change) gets rewritten to describe the full tool surface (tasks, habits, events) once this change is archived

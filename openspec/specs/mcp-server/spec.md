@@ -1,7 +1,7 @@
 # mcp-server Specification
 
 ## Purpose
-TBD - created by archiving change add-mcp-server. Update Purpose after archive.
+Exposes the user's tasks, habits, and events to LLM-driven MCP clients (e.g. Claude, other agents) over the Streamable HTTP transport, authenticated by API key, so an assistant can read and manage a user's data on their behalf with the same scoping and ownership guarantees as the REST API.
 
 ## Requirements
 ### Requirement: MCP endpoint authenticates via API key only
