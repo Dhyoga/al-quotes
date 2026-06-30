@@ -166,3 +166,15 @@ model CalendarSync {
 
   @@unique([entityType, entityId])
 }
+
+model BrowsingDailyStat {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  domain    String
+  date      DateTime @db.Date
+  duration  Int
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, domain, date])
+  @@index([userId, date])
+}
