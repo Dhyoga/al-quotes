@@ -31,8 +31,8 @@ The system SHALL let an authenticated user check whether they currently have an 
 - **WHEN** an authenticated user with no `GoogleCalendarLink` calls `GET /auth/google-calendar`
 - **THEN** the system responds indicating the user is not connected
 
-### Requirement: Calendar sync is published on Task and Habit mutations
-The system SHALL publish a calendar sync job for a Task or Habit create, update, or delete only when the owning user has an active `GoogleCalendarLink` and, for Tasks specifically, only when the Task's `syncToCalendar` flag is `true`. The system SHALL NOT publish a sync job for habit check-ins.
+### Requirement: Calendar sync is published on Task, Habit, and Event mutations
+The system SHALL publish a calendar sync job for a Task, Habit, or Event create, update, or delete only when the owning user has an active `GoogleCalendarLink` AND, for Tasks, the Task's `syncToCalendar` flag is `true` AND, for Habits, the Habit's `syncToCalendar` flag is `true` AND, for Events, the Event's `syncToCalendar` flag is `true`. The system SHALL NOT publish a sync job for habit check-ins.
 
 #### Scenario: Task created by a user with a calendar link and the flag enabled
 - **WHEN** a user with an active `GoogleCalendarLink` creates a Task with `syncToCalendar: true`
@@ -58,13 +58,29 @@ The system SHALL publish a calendar sync job for a Task or Habit create, update,
 - **WHEN** a user with an active `GoogleCalendarLink` deletes a Task that has no `CalendarSync` row
 - **THEN** the system does not publish any sync job
 
+#### Scenario: Habit created by a user with sync enabled
+- **WHEN** a user with an active `GoogleCalendarLink` creates a Habit with `syncToCalendar: true`
+- **THEN** the system publishes a `habit.upserted` sync job
+
+#### Scenario: Habit created with sync disabled (default)
+- **WHEN** a user creates a Habit without `syncToCalendar: true` (or with `syncToCalendar: false`)
+- **THEN** the system does NOT publish a calendar sync job
+
 #### Scenario: Habit check-in never triggers sync
 - **WHEN** a user checks in on a Habit
 - **THEN** the system does not publish any sync job, regardless of whether the user has a `GoogleCalendarLink`
 
+#### Scenario: Event created by a user with sync enabled (default)
+- **WHEN** a user with an active `GoogleCalendarLink` creates an Event with `syncToCalendar: true` (or omits the flag, since it defaults to `true`)
+- **THEN** the system publishes an `event.upserted` sync job
+
+#### Scenario: Event created with sync disabled
+- **WHEN** a user creates an Event with `syncToCalendar: false`
+- **THEN** the system does NOT publish a calendar sync job
+
 #### Scenario: Calendar sync failure does not affect the underlying mutation
 - **WHEN** publishing a sync job fails (e.g. the queue is unreachable)
-- **THEN** the Task or Habit mutation still succeeds and the error is only logged, not surfaced to the caller
+- **THEN** the Task, Habit, or Event mutation still succeeds and the error is only logged, not surfaced to the caller
 
 ### Requirement: Habits sync as a single recurring event
 The system SHALL represent a Habit as one recurring Calendar event using an RRULE derived from its frequency, rather than one event per check-in period.
@@ -76,6 +92,21 @@ The system SHALL represent a Habit as one recurring Calendar event using an RRUL
 #### Scenario: Weekly habit produces a weekly RRULE
 - **WHEN** the system publishes a sync job for a Habit with `frequency: "weekly"`
 - **THEN** the payload's `habit.rrule` field is `"RRULE:FREQ=WEEKLY"`
+
+### Requirement: RRULE reflects selected week days for weekly habits
+When publishing a calendar sync job for a weekly Habit, the system SHALL include an RRULE in the sync payload. If the Habit's `weekDays` array is non-empty, the RRULE SHALL use `BYDAY` to enumerate the selected days; otherwise the RRULE SHALL be `RRULE:FREQ=WEEKLY`.
+
+#### Scenario: Weekly habit with specific days produces BYDAY RRULE
+- **WHEN** a calendar sync job is published for a weekly Habit with `weekDays: [1, 3, 5]`
+- **THEN** the sync payload includes `rrule: "RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR"`
+
+#### Scenario: Weekly habit without day selection produces plain weekly RRULE
+- **WHEN** a calendar sync job is published for a weekly Habit with `weekDays: []`
+- **THEN** the sync payload includes `rrule: "RRULE:FREQ=WEEKLY"`
+
+#### Scenario: Daily habit RRULE is unchanged
+- **WHEN** a calendar sync job is published for a daily Habit
+- **THEN** the sync payload includes `rrule: "RRULE:FREQ=DAILY"`
 
 ### Requirement: Sync jobs are delivered through a durable queue
 The system SHALL publish outbound sync jobs through Upstash QStash rather than calling the n8n webhook directly, so delivery is retried if the webhook is temporarily unreachable.

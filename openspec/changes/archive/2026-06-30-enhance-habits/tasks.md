@@ -31,8 +31,8 @@
 
 ## 5. Manual Testing
 
-- [ ] 5.1 Create a weekly habit with `weekDays: [5]` (Friday) and `syncToCalendar: true` while connected to Google Calendar → confirm the created event has `RRULE:FREQ=WEEKLY;BYDAY=FR`
+- [x] 5.1 Create a weekly habit with `weekDays: [5]` (Friday) and `syncToCalendar: true` while connected to Google Calendar → confirm the created event has `RRULE:FREQ=WEEKLY;BYDAY=FR`
 - [x] 5.2 Create a daily habit with `reminderTime: "05:30"` → confirm field is stored and returned by GET
-- [ ] 5.3 Create a habit with `syncToCalendar: false` while connected → confirm no Google Calendar event is created
-- [ ] 5.4 Update a synced habit to `syncToCalendar: false` → confirm the calendar event is removed
+- [x] 5.3 Create a habit with `syncToCalendar: false` while connected → confirm no Google Calendar event is created
+- [x] 5.4 Update a synced habit to `syncToCalendar: false` → confirm the calendar event is removed
 - [x] 5.5 Confirm existing habits that had a CalendarSync row were backfilled with `syncToCalendar: true` after migration

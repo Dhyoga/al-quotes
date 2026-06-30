@@ -54,16 +54,16 @@
 
 ## 6. Manual Testing
 
-- [ ] 6.1 Create a one-time event via `POST /events` → confirm 201 and correct fields returned
-- [ ] 6.2 Create a recurring event with `isRecurring: true` and a valid RRULE → confirm stored correctly
-- [ ] 6.3 Create an event without `title` or without `startAt` → confirm 400
-- [ ] 6.4 Create a recurring event without `rrule` → confirm 400
-- [ ] 6.5 `GET /events` returns only the authenticated user's events
-- [ ] 6.6 `PATCH /events/:id` updates a field; `GET /events/:id` reflects the change
-- [ ] 6.7 `DELETE /events/:id` responds 204; subsequent `GET /events/:id` returns 404
-- [ ] 6.8 With Google Calendar connected and `syncToCalendar: true`, create an event → confirm a calendar upsert job is published (check QStash logs or n8n)
-- [ ] 6.9 Delete a synced event → confirm a calendar delete job is published
-- [ ] 6.10 Accessing another user's event returns 404
+- [x] 6.1 Create a one-time event via `POST /events` → confirm 201 and correct fields returned
+- [x] 6.2 Create a recurring event with `isRecurring: true` and a valid RRULE → confirm stored correctly
+- [x] 6.3 Create an event without `title` or without `startAt` → confirm 400
+- [x] 6.4 Create a recurring event without `rrule` → confirm 400
+- [x] 6.5 `GET /events` returns only the authenticated user's events
+- [x] 6.6 `PATCH /events/:id` updates a field; `GET /events/:id` reflects the change
+- [x] 6.7 `DELETE /events/:id` responds 204; subsequent `GET /events/:id` returns 404
+- [x] 6.8 With Google Calendar connected and `syncToCalendar: true`, create an event → confirm a calendar upsert job is published (check QStash logs or n8n)
+- [x] 6.9 Delete a synced event → confirm a calendar delete job is published
+- [x] 6.10 Accessing another user's event returns 404
 
 ## 7. Calendar Sync Payload Fix & n8n Workflow
 
@@ -75,9 +75,9 @@
 - [x] 7.4 In the same two nodes, set `location` from `event.location` (new — no existing entity sets `location` on the Calendar API body)
 - [x] 7.5 In the same two nodes, branch `start.dateTime`/`end.dateTime` for `entityType === 'event'` to use `event.startAt`/`event.endAt ?? event.startAt` instead of `$now`-based defaults
 - [x] 7.6 In the same two nodes, extend the `recurrence` expression so `entityType === 'event' && event.isRecurring` also produces `[event.rrule]` (currently only `entityType === 'habit'` is checked)
-- [ ] 7.7 Re-import/update the workflow in the n8n instance and confirm it's active
-- [ ] 7.8 Manual test: with Google Calendar connected, create a recurring event with `syncToCalendar: true` → confirm the n8n execution succeeds (no `.includes` crash on a non-string `action`), the Google Calendar event is created with the correct title/time/recurrence, and the `linked` callback sets `CalendarSync.googleEventId`
-- [ ] 7.9 Manual test: create a non-recurring event and a recurring one back-to-back → confirm neither crashes the workflow and both produce correctly-shaped Google Calendar events
+- [x] 7.7 Re-import/update the workflow in the n8n instance and confirm it's active
+- [x] 7.8 Manual test: with Google Calendar connected, create a recurring event with `syncToCalendar: true` → confirm the n8n execution succeeds (no `.includes` crash on a non-string `action`), the Google Calendar event is created with the correct title/time/recurrence, and the `linked` callback sets `CalendarSync.googleEventId`
+- [x] 7.9 Manual test: create a non-recurring event and a recurring one back-to-back → confirm neither crashes the workflow and both produce correctly-shaped Google Calendar events
 
 ## 8. MCP Tool Support for Events
 
@@ -92,11 +92,11 @@
 
 ## 9. Manual Testing — MCP Tools
 
-- [ ] 9.1 `list_events` via an MCP client returns only the authenticated user's events
-- [ ] 9.2 `create_event` with a recurring event and valid RRULE → confirm it's created and visible via `GET /events`
-- [ ] 9.3 `create_event` with `isRecurring: true` and no `rrule` → confirm a tool error, no event created
-- [ ] 9.4 `update_event` on another user's event id → confirm a tool error, no change made
-- [ ] 9.5 `delete_event` on an owned event → confirm it's removed and a `toolResult({ id, deleted: true })` is returned
-- [ ] 9.6 `delete_event` on another user's event id → confirm a tool error, event not deleted
-- [ ] 9.7 `get_today_overview` with a one-time event today, a recurring event occurring today, and a recurring event not occurring today → confirm `eventsToday` includes the first two and excludes the third
-- [ ] 9.8 `get_today_overview` with an event whose stored `rrule` is malformed → confirm the call still succeeds and returns `tasksDueToday`/`habitsPendingCheckIn` correctly, skipping just that event
+- [x] 9.1 `list_events` via an MCP client returns only the authenticated user's events
+- [x] 9.2 `create_event` with a recurring event and valid RRULE → confirm it's created and visible via `GET /events`
+- [x] 9.3 `create_event` with `isRecurring: true` and no `rrule` → confirm a tool error, no event created
+- [x] 9.4 `update_event` on another user's event id → confirm a tool error, no change made
+- [x] 9.5 `delete_event` on an owned event → confirm it's removed and a `toolResult({ id, deleted: true })` is returned
+- [x] 9.6 `delete_event` on another user's event id → confirm a tool error, event not deleted
+- [x] 9.7 `get_today_overview` with a one-time event today, a recurring event occurring today, and a recurring event not occurring today → confirm `eventsToday` includes the first two and excludes the third
+- [x] 9.8 `get_today_overview` with an event whose stored `rrule` is malformed → confirm the call still succeeds and returns `tasksDueToday`/`habitsPendingCheckIn` correctly, skipping just that event
