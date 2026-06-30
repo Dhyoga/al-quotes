@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Before running this\n\n1. Create an **HTTP Header Auth** credential named `Webhook Secret`:\n   - Header Name: `X-Webhook-Secret`\n   - Header Value: same value as al-quotes' `WEBHOOK_SECRET` env var\n2. Assign that credential to: **Webhook**, **Callback: Linked**, **Callback: Unlinked**\n3. Replace the placeholder URL in **Callback: Linked** and **Callback: Unlinked** with your real al-quotes URL, e.g. `https://<your-al-quotes-domain>/webhooks/n8n/calendar-sync`\n4. Activate the workflow, copy the **production** webhook URL from the **Webhook** node, and set it as al-quotes' `CALENDAR_WEBHOOK_URL` env var\n\nHabit events get a default 1-hour block starting at the moment the workflow runs, repeating via RRULE — adjust the expression in **Insert Event** / **Patch Event** if you want a fixed time of day instead.",
+        "content": "## Before running this\n\n1. Create an **HTTP Header Auth** credential named `Webhook Secret`:\n   - Header Name: `X-Webhook-Secret`\n   - Header Value: same value as al-quotes' `WEBHOOK_SECRET` env var\n2. Assign that credential to: **Webhook**, **Callback: Linked**, **Callback: Unlinked**\n3. Replace the placeholder URL in **Callback: Linked** and **Callback: Unlinked** with your real al-quotes URL, e.g. `https://<your-al-quotes-domain>/webhooks/n8n/calendar-sync`\n4. Activate the workflow, copy the **production** webhook URL from the **Webhook** node, and set it as al-quotes' `CALENDAR_WEBHOOK_URL` env var\n\nHabit events get a default 1-hour block starting at the moment the workflow runs, repeating via RRULE \u2014 adjust the expression in **Insert Event** / **Patch Event** if you want a fixed time of day instead.",
         "height": 532,
         "width": 460
       },
@@ -34,6 +34,21 @@
       "position": [
         -192,
         160
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const body = $input.item.json.body;\n\nlet start;\nlet end;\nif (body.entityType === 'task') {\n  start = body.task.startDate || body.task.dueDate;\n  end = body.task.dueDate || body.task.startDate;\n} else if (body.entityType === 'event') {\n  start = body.event.startAt;\n  end = body.event.endAt ?? body.event.startAt;\n} else {\n  start = new Date().toISOString();\n  end = new Date(Date.now() + 60 * 60 * 1000).toISOString();\n}\n\nfunction resolveTimeZone(dateTime) {\n  const match = /(Z|[+-]\\d{2}:\\d{2})$/.exec(dateTime || '');\n  if (!match) return 'UTC';\n  if (match[1] === 'Z') return 'Etc/UTC';\n\n  const [, sign, hh, mm] = /^([+-])(\\d{2}):(\\d{2})$/.exec(match[1]);\n  if (mm !== '00') return 'UTC';\n\n  const hours = parseInt(hh, 10);\n  if (hours === 0) return 'Etc/UTC';\n\n  // Etc/GMT signs are inverted by POSIX convention: +07:00 -> Etc/GMT-7\n  const invertedSign = sign === '+' ? '-' : '+';\n  return `Etc/GMT${invertedSign}${hours}`;\n}\n\nreturn {\n  json: {\n    ...$input.item.json,\n    resolvedStart: start,\n    resolvedEnd: end,\n    resolvedTimeZone: resolveTimeZone(start),\n  },\n};\n"
+      },
+      "name": "Resolve Sync DateTime",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "id": "c7b61c7a-e9a2-4da7-ab26-d14babd65ee9",
+      "position": [
+        -64,
+        -16
       ]
     },
     {
@@ -71,7 +86,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.entityType === 'event' ? $json.body.event.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.entityType === 'event' ? $json.body.event.description : $json.body.habit.description,\n  location: $json.body.entityType === 'event' ? $json.body.event.location : undefined,\n  start: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.startDate || $json.body.task.dueDate) : $json.body.entityType === 'event' ? $json.body.event.startAt : $now.toISO(),\n    timeZone: 'UTC'\n  },\n  end: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.dueDate || $json.body.task.startDate) : $json.body.entityType === 'event' ? ($json.body.event.endAt ?? $json.body.event.startAt) : $now.plus({ hours: 1 }).toISO(),\n    timeZone: 'UTC'\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : ($json.body.entityType === 'event' && $json.body.event.isRecurring) ? [ $json.body.event.rrule ] : undefined\n} }}",
+        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.entityType === 'event' ? $json.body.event.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.entityType === 'event' ? $json.body.event.description : $json.body.habit.description,\n  location: $json.body.entityType === 'event' ? $json.body.event.location : undefined,\n  start: {\n    dateTime: $json.resolvedStart,\n    timeZone: $json.resolvedTimeZone\n  },\n  end: {\n    dateTime: $json.resolvedEnd,\n    timeZone: $json.resolvedTimeZone\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : ($json.body.entityType === 'event' && $json.body.event.isRecurring) ? [ $json.body.event.rrule ] : undefined\n} }}",
         "options": {}
       },
       "id": "33970951-7a77-428e-bc3a-9f108549f5e5",
@@ -98,7 +113,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.entityType === 'event' ? $json.body.event.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.entityType === 'event' ? $json.body.event.description : $json.body.habit.description,\n  location: $json.body.entityType === 'event' ? $json.body.event.location : undefined,\n  start: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.startDate || $json.body.task.dueDate) : $json.body.entityType === 'event' ? $json.body.event.startAt : $now.toISO(),\n    timeZone: 'UTC'\n  },\n  end: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.dueDate || $json.body.task.startDate) : $json.body.entityType === 'event' ? ($json.body.event.endAt ?? $json.body.event.startAt) : $now.plus({ hours: 1 }).toISO(),\n    timeZone: 'UTC'\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : ($json.body.entityType === 'event' && $json.body.event.isRecurring) ? [ $json.body.event.rrule ] : undefined\n} }}",
+        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.entityType === 'event' ? $json.body.event.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.entityType === 'event' ? $json.body.event.description : $json.body.habit.description,\n  location: $json.body.entityType === 'event' ? $json.body.event.location : undefined,\n  start: {\n    dateTime: $json.resolvedStart,\n    timeZone: $json.resolvedTimeZone\n  },\n  end: {\n    dateTime: $json.resolvedEnd,\n    timeZone: $json.resolvedTimeZone\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : ($json.body.entityType === 'event' && $json.body.event.isRecurring) ? [ $json.body.event.rrule ] : undefined\n} }}",
         "options": {}
       },
       "id": "5933c131-334f-48c8-8672-60a3a3a1587d",
@@ -135,7 +150,7 @@
       ],
       "notesInFlow": true,
       "continueOnFail": true,
-      "notes": "continueOnFail=true: Google returns 404/410 if the event is already gone — that should still count as successfully unlinked, not a workflow failure."
+      "notes": "continueOnFail=true: Google returns 404/410 if the event is already gone \u2014 that should still count as successfully unlinked, not a workflow failure."
     },
     {
       "parameters": {
@@ -247,7 +262,7 @@
       "main": [
         [
           {
-            "node": "Has Google Event Id?",
+            "node": "Resolve Sync DateTime",
             "type": "main",
             "index": 0
           }
@@ -339,6 +354,17 @@
         [
           {
             "node": "Is Upsert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Sync DateTime": {
+      "main": [
+        [
+          {
+            "node": "Has Google Event Id?",
             "type": "main",
             "index": 0
           }
