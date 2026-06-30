@@ -1,5 +1,11 @@
-import { rrulestr } from 'rrule';
+import rrulePkg from 'rrule';
 import type { Event } from '@prisma/client';
+
+// rrule's CJS build is a webpack UMD bundle with no package.json "exports" field,
+// so Node's native ESM loader can't statically detect named exports (cjs-module-lexer
+// can't parse the webpack output) and `import { rrulestr } from 'rrule'` fails to link
+// at runtime. Importing the default and destructuring at runtime sidesteps that.
+const { rrulestr } = rrulePkg;
 
 // Stored RRULE strings never carry DTSTART (see buildHabitRrule in lib/calendar-sync.ts
 // and the events feature design notes), so dtstart is supplied separately from startAt.
