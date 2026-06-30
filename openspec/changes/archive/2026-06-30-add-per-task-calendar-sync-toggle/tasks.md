@@ -2,7 +2,7 @@
 
 - [x] 1.1 Add `syncToCalendar Boolean @default(false)` to the `Task` model in `prisma/schema.prisma`
 - [x] 1.2 Generate the migration, then hand-edit the generated SQL to add the backfill statement (`syncToCalendar = true` for tasks with an existing `CalendarSync` row, `false` otherwise)
-- [ ] 1.3 Run the migration locally and verify backfilled values against existing `CalendarSync` rows (pending — `prisma migrate dev` can't create a shadow DB against the configured Supabase instance; migration SQL was hand-written instead and needs to be applied with `prisma migrate deploy` by someone with DB access)
+- [x] 1.3 Run the migration locally and verify backfilled values against existing `CalendarSync` rows (applied via `prisma migrate deploy`, run by the user; `prisma migrate status` confirms the schema is up to date)
 
 ## 2. Repository layer
 
