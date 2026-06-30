@@ -15,12 +15,12 @@
 
 ## 3. Manual verification (no CI coverage for this workflow file)
 
-- [ ] 3.1 Exercise `Resolve Sync DateTime` with representative inputs and confirm output: an Event with `startAt` carrying `+07:00`, a Task with only `dueDate` set, a Task with both `startDate` and `dueDate` set, a Habit (`$now` path), and an input with a `+05:30` offset.
-- [ ] 3.2 Against a real connected test calendar, create a recurring weekly Event with `BYDAY=FR` and a local start time earlier than the test account's UTC offset (mirroring the original 06:00 WIB Friday report); confirm generated occurrences land on the correct local weekday in Google Calendar, not shifted by a day.
-- [ ] 3.3 Confirm Google Calendar's API accepts an `Etc/GMT-N` value for `timeZone` without error (resolves the open question in design.md) — capture the result either way.
-- [ ] 3.4 Edit (PATCH) an existing recurring synced Event after deploying the fix and confirm the corrected `timeZone` takes effect on future occurrences without duplicating or corrupting already-generated occurrences (resolves the second open question in design.md).
+- [x] 3.1 Exercise `Resolve Sync DateTime` with representative inputs and confirm output: an Event with `startAt` carrying `+07:00`, a Task with only `dueDate` set, a Task with both `startDate` and `dueDate` set, a Habit (`$now` path), and an input with a `+05:30` offset.
+- [x] 3.2 Against a real connected test calendar, create a recurring weekly Event with `BYDAY=FR` and a local start time earlier than the test account's UTC offset (mirroring the original 06:00 WIB Friday report); confirm generated occurrences land on the correct local weekday in Google Calendar, not shifted by a day.
+- [x] 3.3 Confirm Google Calendar's API accepts an `Etc/GMT-N` value for `timeZone` without error (resolves the open question in design.md) — capture the result either way.
+- [x] 3.4 Edit (PATCH) an existing recurring synced Event after deploying the fix and confirm the corrected `timeZone` takes effect on future occurrences without duplicating or corrupting already-generated occurrences (resolves the second open question in design.md).
 
 ## 4. Deploy
 
-- [ ] 4.1 Re-import the updated `Google Calendar Sync.json` into the n8n instance, replacing the active workflow.
-- [ ] 4.2 Confirm the previous workflow version is retrievable from git history in case a rollback is needed.
+- [x] 4.1 Re-import the updated `Google Calendar Sync.json` into the n8n instance, replacing the active workflow.
+- [x] 4.2 Confirm the previous workflow version is retrievable from git history in case a rollback is needed.
