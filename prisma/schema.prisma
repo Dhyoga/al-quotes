@@ -83,15 +83,18 @@ model Comment {
 }
 
 model Habit {
-  id          Int            @id @default(autoincrement())
-  userId      String
-  title       String
-  description String?
-  priority    Priority?
-  frequency   HabitFrequency
-  checkIns    HabitCheckIn[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id             Int            @id @default(autoincrement())
+  userId         String
+  title          String
+  description    String?
+  priority       Priority?
+  frequency      HabitFrequency
+  weekDays       Int[]          @default([])
+  reminderTime   String?
+  syncToCalendar Boolean        @default(false)
+  checkIns       HabitCheckIn[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@index([userId])
 }
@@ -132,6 +135,25 @@ model GoogleCalendarLink {
 enum CalendarEntityType {
   task
   habit
+  event
+}
+
+model Event {
+  id             Int      @id @default(autoincrement())
+  userId         String
+  title          String
+  description    String?
+  location       String?
+  startAt        String
+  endAt          String?
+  isRecurring    Boolean  @default(false)
+  rrule          String?
+  syncToCalendar Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, startAt])
 }
 
 model CalendarSync {

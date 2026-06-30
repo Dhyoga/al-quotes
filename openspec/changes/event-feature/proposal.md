@@ -26,5 +26,6 @@ The app currently tracks recurring habits and one-off tasks, but has no way to r
 - `lib/events-repository.ts` — new file
 - `routes/events.ts` — new file
 - `server.ts` (or router index) — mount `/events` router
-- `lib/calendar-sync.ts` — minor: `event` entity type wired into sync helpers (no structural changes needed since helpers are generic)
+- `lib/calendar-sync.ts` — `event` entity type wired into sync helpers; the action-string field in `syncUpsert`/`syncDelete` is renamed from `event` to `action` to avoid colliding with the `[entityType]: entityPayload` key when `entityType === 'event'` (see design.md)
+- `al-quotes/n8n/Google Calendar Sync.json` — add an `entityType === 'event'` branch to the **Insert Event**/**Patch Event** nodes (title/description/location/start/end/recurrence sourced from the event payload instead of falling through to the habit branch), and update **Is Upsert?** to read the renamed `action` field (see design.md)
 - `lib/pusher.ts` — add `publishEventEvent` function (or reuse existing pattern)

@@ -26,4 +26,8 @@ const publishCommentEvent = (userId: string, event: string, payload: unknown): v
   publish(`private-user-${userId}`, event, payload);
 };
 
-export { pusher, publishTaskEvent, publishHabitEvent, publishCommentEvent };
+const publishEventEvent = (userId: string, event: string, payload: unknown): void => {
+  publish(`private-user-${userId}`, event, payload);
+};
+
+export { pusher, publishTaskEvent, publishHabitEvent, publishCommentEvent, publishEventEvent };

@@ -21,7 +21,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{ $json.body.event.includes('upserted') }}",
+              "value1": "={{ $json.body.action.includes('upserted') }}",
               "value2": true
             }
           ]
@@ -71,7 +71,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.habit.description,\n  start: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.startDate || $json.body.task.dueDate) : $now.toISO(),\n    timeZone: 'UTC'\n  },\n  end: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.dueDate || $json.body.task.startDate) : $now.plus({ hours: 1 }).toISO(),\n    timeZone: 'UTC'\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : undefined\n} }}",
+        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.entityType === 'event' ? $json.body.event.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.entityType === 'event' ? $json.body.event.description : $json.body.habit.description,\n  location: $json.body.entityType === 'event' ? $json.body.event.location : undefined,\n  start: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.startDate || $json.body.task.dueDate) : $json.body.entityType === 'event' ? $json.body.event.startAt : $now.toISO(),\n    timeZone: 'UTC'\n  },\n  end: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.dueDate || $json.body.task.startDate) : $json.body.entityType === 'event' ? ($json.body.event.endAt ?? $json.body.event.startAt) : $now.plus({ hours: 1 }).toISO(),\n    timeZone: 'UTC'\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : ($json.body.entityType === 'event' && $json.body.event.isRecurring) ? [ $json.body.event.rrule ] : undefined\n} }}",
         "options": {}
       },
       "id": "33970951-7a77-428e-bc3a-9f108549f5e5",
@@ -98,7 +98,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.habit.description,\n  start: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.startDate || $json.body.task.dueDate) : $now.toISO(),\n    timeZone: 'UTC'\n  },\n  end: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.dueDate || $json.body.task.startDate) : $now.plus({ hours: 1 }).toISO(),\n    timeZone: 'UTC'\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : undefined\n} }}",
+        "jsonBody": "={{ {\n  summary: $json.body.entityType === 'task' ? $json.body.task.title : $json.body.entityType === 'event' ? $json.body.event.title : $json.body.habit.title,\n  description: $json.body.entityType === 'task' ? $json.body.task.description : $json.body.entityType === 'event' ? $json.body.event.description : $json.body.habit.description,\n  location: $json.body.entityType === 'event' ? $json.body.event.location : undefined,\n  start: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.startDate || $json.body.task.dueDate) : $json.body.entityType === 'event' ? $json.body.event.startAt : $now.toISO(),\n    timeZone: 'UTC'\n  },\n  end: {\n    dateTime: $json.body.entityType === 'task' ? ($json.body.task.dueDate || $json.body.task.startDate) : $json.body.entityType === 'event' ? ($json.body.event.endAt ?? $json.body.event.startAt) : $now.plus({ hours: 1 }).toISO(),\n    timeZone: 'UTC'\n  },\n  recurrence: $json.body.entityType === 'habit' ? [ $json.body.habit.rrule ] : ($json.body.entityType === 'event' && $json.body.event.isRecurring) ? [ $json.body.event.rrule ] : undefined\n} }}",
         "options": {}
       },
       "id": "5933c131-334f-48c8-8672-60a3a3a1587d",

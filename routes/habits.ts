@@ -20,13 +20,27 @@ const isValidDateString = (date: string): boolean => {
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
 };
 
+const isValidWeekDays = (weekDays: unknown): weekDays is number[] =>
+  Array.isArray(weekDays) && weekDays.every((day) => Number.isInteger(day) && day >= 0 && day <= 6);
+
+const REMINDER_TIME_RE = /^(\d{2}):(\d{2})$/;
+
+const isValidReminderTime = (reminderTime: unknown): reminderTime is string => {
+  if (typeof reminderTime !== 'string') return false;
+  const match = REMINDER_TIME_RE.exec(reminderTime);
+  if (!match) return false;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+};
+
 const router = express.Router();
 router.use(requireJwt);
 
 router
   .post('/', async (req, res, next) => {
     try {
-      const { title, description, priority, frequency } = req.body;
+      const { title, description, priority, frequency, weekDays, reminderTime, syncToCalendar } = req.body;
 
       if (!title) {
         return res.status(400).json({ message: 'title is required' });
@@ -37,8 +51,25 @@ router
       if (priority !== undefined && priority !== null && !VALID_PRIORITY.includes(priority)) {
         return res.status(400).json({ message: 'Invalid priority' });
       }
+      if (weekDays !== undefined && !isValidWeekDays(weekDays)) {
+        return res.status(400).json({ message: 'weekDays must be an array of integers between 0 and 6' });
+      }
+      if (reminderTime !== undefined && reminderTime !== null && !isValidReminderTime(reminderTime)) {
+        return res.status(400).json({ message: 'reminderTime must be a valid "HH:MM" string' });
+      }
+      if (syncToCalendar !== undefined && typeof syncToCalendar !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid syncToCalendar' });
+      }
 
-      const habit = await createHabit(req.userId!, { title, description, priority, frequency });
+      const habit = await createHabit(req.userId!, {
+        title,
+        description,
+        priority,
+        frequency,
+        weekDays: frequency === HabitFrequency.weekly ? weekDays : undefined,
+        reminderTime,
+        syncToCalendar,
+      });
       res.status(201).json(habit);
     } catch (error) {
       next(error);
@@ -67,7 +98,7 @@ router
       const existing = await findHabitForUser(req.userId!, id);
       if (!existing) return res.status(404).json({ message: 'Habit not found' });
 
-      const { title, description, priority, frequency } = req.body;
+      const { title, description, priority, frequency, weekDays, reminderTime, syncToCalendar } = req.body;
 
       if (frequency !== undefined && !VALID_FREQUENCY.includes(frequency)) {
         return res.status(400).json({ message: 'frequency must be "daily" or "weekly"' });
@@ -75,12 +106,24 @@ router
       if (priority !== undefined && priority !== null && !VALID_PRIORITY.includes(priority)) {
         return res.status(400).json({ message: 'Invalid priority' });
       }
+      if (weekDays !== undefined && !isValidWeekDays(weekDays)) {
+        return res.status(400).json({ message: 'weekDays must be an array of integers between 0 and 6' });
+      }
+      if (reminderTime !== undefined && reminderTime !== null && !isValidReminderTime(reminderTime)) {
+        return res.status(400).json({ message: 'reminderTime must be a valid "HH:MM" string' });
+      }
+      if (syncToCalendar !== undefined && typeof syncToCalendar !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid syncToCalendar' });
+      }
 
       const data: Prisma.HabitUpdateInput = {};
       if (title !== undefined) data.title = title;
       if (description !== undefined) data.description = description;
       if (priority !== undefined) data.priority = priority;
       if (frequency !== undefined) data.frequency = frequency;
+      if (weekDays !== undefined) data.weekDays = weekDays;
+      if (reminderTime !== undefined) data.reminderTime = reminderTime;
+      if (syncToCalendar !== undefined) data.syncToCalendar = syncToCalendar;
 
       const habit = await updateHabit(req.userId!, id, data);
       res.json(habit);

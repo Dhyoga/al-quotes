@@ -5,6 +5,7 @@ import quotesRoutes from './routes/quotes.js';
 import picturesRoutes from './routes/pictures.js';
 import tasksRoutes from './routes/tasks.js';
 import habitsRoutes from './routes/habits.js';
+import eventsRoutes from './routes/events.js';
 import apiKeysRoutes from './routes/api-keys.js';
 import mcpRoutes from './routes/mcp.js';
 import pusherAuthRoutes from './routes/pusher-auth.js';
@@ -27,7 +28,7 @@ app.use(
 
 // Tasks, Habits, API key management & Pusher channel auth butuh write methods, dibatasi ke origin extension saja
 app.use(
-    ['/tasks', '/habits', '/auth/api-keys', '/pusher/auth', '/auth/google-calendar'],
+    ['/tasks', '/habits', '/events', '/auth/api-keys', '/pusher/auth', '/auth/google-calendar'],
     cors({
         origin: process.env.EXTENSION_ORIGIN || false,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -43,6 +44,7 @@ app.use('/quotes', quotesRoutes);
 app.use('/pictures', picturesRoutes);
 app.use('/tasks', tasksRoutes);
 app.use('/habits', habitsRoutes);
+app.use('/events', eventsRoutes);
 app.use('/auth/api-keys', apiKeysRoutes);
 app.use('/mcp', mcpRoutes);
 app.use('/pusher/auth', pusherAuthRoutes);

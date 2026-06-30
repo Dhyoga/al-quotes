@@ -5,9 +5,14 @@ import { refreshGoogleAccessToken } from './google-calendar.js';
 
 const qstash = new Client({ token: process.env.QSTASH_TOKEN! });
 
-const RRULE_BY_FREQUENCY: Record<HabitFrequency, string> = {
-  [HabitFrequency.daily]: 'RRULE:FREQ=DAILY',
-  [HabitFrequency.weekly]: 'RRULE:FREQ=WEEKLY',
+const ICAL_WEEKDAY_BY_INDEX = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+
+const buildHabitRrule = (frequency: HabitFrequency, weekDays: number[]): string => {
+  if (frequency === HabitFrequency.daily) return 'RRULE:FREQ=DAILY';
+  if (weekDays.length === 0) return 'RRULE:FREQ=WEEKLY';
+
+  const byDay = [...weekDays].sort((a, b) => a - b).map((day) => ICAL_WEEKDAY_BY_INDEX[day]);
+  return `RRULE:FREQ=WEEKLY;BYDAY=${byDay.join(',')}`;
 };
 
 // Fire-and-forget: a failure to publish must never propagate into the
@@ -44,7 +49,7 @@ const syncUpsert = async (
   if (!refreshed) return;
 
   publishCalendarSync({
-    event: `${entityType}.upserted`,
+    action: `${entityType}.upserted`,
     entityType,
     entityId,
     googleEventId: sync?.googleEventId ?? null,
@@ -69,7 +74,7 @@ const syncDelete = async (
   if (!refreshed) return;
 
   publishCalendarSync({
-    event: `${entityType}.deleted`,
+    action: `${entityType}.deleted`,
     entityType,
     entityId,
     googleEventId,
@@ -78,4 +83,4 @@ const syncDelete = async (
   });
 };
 
-export { syncUpsert, syncDelete, RRULE_BY_FREQUENCY };
+export { syncUpsert, syncDelete, buildHabitRrule };
