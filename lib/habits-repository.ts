@@ -55,7 +55,7 @@ const deleteHabit = async (userId: string, id: number) => {
   }
 };
 
-const checkInHabit = async (userId: string, habit: Habit, date?: Date) => {
+const checkInHabit = async (userId: string, habit: Habit, date?: string | Date) => {
   const periodStart = computePeriodStart(habit.frequency, date);
   const checkIn = await prisma.habitCheckIn.upsert({
     where: { habitId_periodStart: { habitId: habit.id, periodStart } },

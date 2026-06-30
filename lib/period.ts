@@ -14,7 +14,12 @@ const startOfIsoWeekUTC = (date: Date): Date => {
   return d;
 };
 
-const computePeriodStart = (frequency: HabitFrequency, date: Date = new Date()): Date =>
-  frequency === 'weekly' ? startOfIsoWeekUTC(date) : startOfDayUTC(date);
+const computePeriodStart = (
+  frequency: HabitFrequency,
+  date: string | Date = new Date(),
+): Date => {
+  const d = typeof date === 'string' ? new Date(`${date}T00:00:00.000Z`) : date;
+  return frequency === 'weekly' ? startOfIsoWeekUTC(d) : startOfDayUTC(d);
+};
 
 export { computePeriodStart };

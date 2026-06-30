@@ -14,6 +14,12 @@ import {
 const VALID_FREQUENCY = Object.values(HabitFrequency);
 const VALID_PRIORITY = Object.values(Priority);
 
+const isValidDateString = (date: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
+};
+
 const router = express.Router();
 router.use(requireJwt);
 
@@ -99,7 +105,12 @@ router
       const habit = await findHabitForUser(req.userId!, id);
       if (!habit) return res.status(404).json({ message: 'Habit not found' });
 
-      const checkIn = await checkInHabit(req.userId!, habit);
+      const { date } = req.body;
+      if (date !== undefined && !isValidDateString(date)) {
+        return res.status(400).json({ message: 'date must be a valid YYYY-MM-DD calendar date' });
+      }
+
+      const checkIn = await checkInHabit(req.userId!, habit, date);
       res.status(201).json(checkIn);
     } catch (error) {
       next(error);
