@@ -95,10 +95,17 @@ const updateTask = async (
 ) => {
   let task;
   if (statusTransition) {
+    const completedAt =
+      statusTransition.toStatus === TaskStatus.DONE
+        ? new Date()
+        : statusTransition.fromStatus === TaskStatus.DONE
+          ? null
+          : undefined;
+
     task = await prisma.$transaction(async (tx) => {
       const updated = await tx.task.update({
         where: { id },
-        data: { ...data, status: statusTransition.toStatus },
+        data: { ...data, status: statusTransition.toStatus, completedAt },
       });
       await tx.taskStatusHistory.create({
         data: {

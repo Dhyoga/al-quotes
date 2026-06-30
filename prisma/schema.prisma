@@ -49,6 +49,7 @@ model Task {
   dueDate     DateTime?
   priority    Priority?
   status      TaskStatus @default(TODO)
+  completedAt DateTime?
   position    Float
   syncToCalendar Boolean @default(false)
   comments    Comment[]
