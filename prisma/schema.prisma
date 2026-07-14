@@ -178,3 +178,60 @@ model BrowsingDailyStat {
   @@unique([userId, domain, date])
   @@index([userId, date])
 }
+
+enum BrainDumpTheme {
+  ide
+  kerja
+  pribadi
+  dakwah
+}
+
+model BrainDumpNote {
+  id        Int            @id @default(autoincrement())
+  userId    String
+  theme     BrainDumpTheme
+  body      String
+  createdAt DateTime       @default(now())
+
+  @@index([userId])
+}
+
+enum Prayer {
+  Fajr
+  Dhuhr
+  Asr
+  Maghrib
+  Isha
+}
+
+model PrayerCheckIn {
+  id            Int       @id @default(autoincrement())
+  userId        String
+  date          DateTime  @db.Date
+  prayer        Prayer
+  scheduledTime String
+  actualTime    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, date, prayer])
+  @@index([userId, date])
+}
+
+model QuranProgress {
+  id                Int      @id @default(autoincrement())
+  userId            String   @unique
+  juzCompleted      Int      @default(0)
+  pagesInCurrentJuz Int      @default(0)
+  updatedAt         DateTime @updatedAt
+}
+
+model TodoItem {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  text      String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

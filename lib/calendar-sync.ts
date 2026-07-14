@@ -1,9 +1,6 @@
-import { Client } from '@upstash/qstash';
 import { CalendarEntityType, HabitFrequency } from '@prisma/client';
 import prisma from './prisma.js';
 import { refreshGoogleAccessToken } from './google-calendar.js';
-
-const qstash = new Client({ token: process.env.QSTASH_TOKEN! });
 
 const ICAL_WEEKDAY_BY_INDEX = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
@@ -26,8 +23,16 @@ const publishCalendarSync = (payload: Record<string, unknown>): void => {
     return;
   }
 
-  qstash
-    .publishJSON({ url, body: payload, headers: { 'X-Webhook-Secret': secret } })
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Webhook-Secret': secret },
+    body: JSON.stringify(payload),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        console.error(`Calendar sync webhook responded with ${response.status}`);
+      }
+    })
     .catch((error: unknown) => {
       console.error('Failed to publish calendar sync job:', error);
     });

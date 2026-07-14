@@ -30,4 +30,30 @@ const publishEventEvent = (userId: string, event: string, payload: unknown): voi
   publish(`private-user-${userId}`, event, payload);
 };
 
-export { pusher, publishTaskEvent, publishHabitEvent, publishCommentEvent, publishEventEvent };
+const publishBrainDumpEvent = (userId: string, event: string, payload: unknown): void => {
+  publish(`private-user-${userId}`, event, payload);
+};
+
+const publishPrayerCheckInEvent = (userId: string, event: string, payload: unknown): void => {
+  publish(`private-user-${userId}`, event, payload);
+};
+
+const publishQuranProgressEvent = (userId: string, event: string, payload: unknown): void => {
+  publish(`private-user-${userId}`, event, payload);
+};
+
+const publishTodoItemEvent = (userId: string, event: string, payload: unknown): void => {
+  publish(`private-user-${userId}`, event, payload);
+};
+
+export {
+  pusher,
+  publishTaskEvent,
+  publishHabitEvent,
+  publishCommentEvent,
+  publishEventEvent,
+  publishBrainDumpEvent,
+  publishPrayerCheckInEvent,
+  publishQuranProgressEvent,
+  publishTodoItemEvent,
+};
