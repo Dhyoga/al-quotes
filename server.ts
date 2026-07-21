@@ -21,6 +21,13 @@ import express, { type Request, type Response, type NextFunction } from 'express
 const app = express();
 const port = process.env.PORT || 3000;
 
+// process.env.EXTENSION_ORIGIN can pick up stray whitespace/newlines from how
+// it's set (Vercel dashboard paste, `vercel env add` piped from a file, etc.).
+// cors() writes this straight into the Access-Control-Allow-Origin header with
+// no validation, so an unsanitized value causes Node to throw "Invalid
+// character in header content" on every cross-origin request.
+const extensionOrigin = (process.env.EXTENSION_ORIGIN || '').replace(/[\r\n]+/g, '').trim() || false;
+
 // Quotes & Pictures tetap public, read-only, untuk semua origin
 app.use(
     ['/quotes', '/pictures'],
@@ -35,7 +42,7 @@ app.use(
 app.use(
     ['/tasks', '/habits', '/events', '/brain-dump', '/prayer-checkins', '/quran-progress', '/todolist', '/browser-tracking', '/auth/api-keys', '/pusher/auth', '/auth/google-calendar'],
     cors({
-        origin: process.env.EXTENSION_ORIGIN || false,
+        origin: extensionOrigin,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
     })
