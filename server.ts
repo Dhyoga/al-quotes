@@ -9,6 +9,7 @@ import eventsRoutes from './routes/events.js';
 import brainDumpRoutes from './routes/brain-dump.js';
 import prayerCheckinsRoutes from './routes/prayer-checkins.js';
 import quranProgressRoutes from './routes/quran-progress.js';
+import quranRoutes from './routes/quran.js';
 import todolistRoutes from './routes/todolist.js';
 import apiKeysRoutes from './routes/api-keys.js';
 import mcpRoutes from './routes/mcp.js';
@@ -40,7 +41,7 @@ app.use(
 
 // Tasks, Habits, API key management & Pusher channel auth butuh write methods, dibatasi ke origin extension saja
 app.use(
-    ['/tasks', '/habits', '/events', '/brain-dump', '/prayer-checkins', '/quran-progress', '/todolist', '/browser-tracking', '/auth/api-keys', '/pusher/auth', '/auth/google-calendar'],
+    ['/tasks', '/habits', '/events', '/brain-dump', '/prayer-checkins', '/quran-progress', '/quran', '/todolist', '/browser-tracking', '/auth/api-keys', '/pusher/auth', '/auth/google-calendar'],
     cors({
         origin: extensionOrigin,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -60,6 +61,7 @@ app.use('/events', eventsRoutes);
 app.use('/brain-dump', brainDumpRoutes);
 app.use('/prayer-checkins', prayerCheckinsRoutes);
 app.use('/quran-progress', quranProgressRoutes);
+app.use('/quran', quranRoutes);
 app.use('/todolist', todolistRoutes);
 app.use('/browser-tracking', browserTrackingRoutes);
 app.use('/auth/api-keys', apiKeysRoutes);

@@ -41,4 +41,16 @@ const incrementPage = async (userId: string) => {
   return updated;
 };
 
-export { getOrCreateForUser, incrementPage };
+const updateCurrentReading = async (userId: string, surahId: number, ayahNumber: number) => {
+  await getOrCreateForUser(userId);
+
+  const updated = await prisma.quranProgress.update({
+    where: { userId },
+    data: { currentSurahId: surahId, currentAyahNumber: ayahNumber, lastReadAt: new Date() },
+  });
+
+  publishQuranProgressEvent(userId, 'quranProgress.updated', updated);
+  return updated;
+};
+
+export { getOrCreateForUser, incrementPage, updateCurrentReading };

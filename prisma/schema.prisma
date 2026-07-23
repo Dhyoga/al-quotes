@@ -218,12 +218,41 @@ model PrayerCheckIn {
   @@index([userId, date])
 }
 
+model QuranSurah {
+  id             Int         @id
+  number         Int         @unique
+  name           String
+  englishName    String
+  numberOfAyahs  Int
+  revelationType String
+  ayahs          QuranAyah[]
+  readers        QuranProgress[]
+
+  @@map("quran_surah")
+}
+
+model QuranAyah {
+  id      Int        @id @default(autoincrement())
+  surahId Int
+  surah   QuranSurah @relation(fields: [surahId], references: [id], onDelete: Cascade)
+  number  Int
+  text    String
+
+  @@unique([surahId, number])
+  @@index([surahId])
+  @@map("quran_ayah")
+}
+
 model QuranProgress {
-  id                Int      @id @default(autoincrement())
-  userId            String   @unique
-  juzCompleted      Int      @default(0)
-  pagesInCurrentJuz Int      @default(0)
-  updatedAt         DateTime @updatedAt
+  id                Int         @id @default(autoincrement())
+  userId            String      @unique
+  juzCompleted      Int         @default(0)
+  pagesInCurrentJuz Int         @default(0)
+  currentSurahId    Int?
+  currentSurah      QuranSurah? @relation(fields: [currentSurahId], references: [id])
+  currentAyahNumber Int?
+  lastReadAt        DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 }
 
 model TodoItem {
