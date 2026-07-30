@@ -7,6 +7,8 @@ import { listHabitsForUser, findHabitForUser, checkInHabit } from './habits-repo
 import { listEventsForUser, findEventForUser, createEvent, updateEvent, deleteEvent } from './events-repository.js';
 import { computePeriodStart } from './period.js';
 import { getEventOccurrencesInRange } from './recurrence.js';
+import { getOrCreateForUser, incrementPage, updateCurrentReading } from './quran-progress-repository.js';
+import { findSurahById } from './quran-repository.js';
 
 const VALID_STATUS = Object.values(TaskStatus) as [string, ...string[]];
 const VALID_PRIORITY = Object.values(Priority) as [string, ...string[]];
@@ -276,6 +278,42 @@ const registerTools = (server: McpServer, userId: string): void => {
       });
 
       return toolResult({ tasksDueToday, habitsPendingCheckIn, eventsToday });
+    }
+  );
+
+  server.registerTool(
+    'get_quran_progress',
+    {
+      description:
+        "Get the user's Quran reading progress (juz completed, pages in current juz, current surah/ayah).",
+    },
+    async () => toolResult(await getOrCreateForUser(userId))
+  );
+
+  server.registerTool(
+    'increment_quran_page',
+    {
+      description:
+        "Increment the user's Quran reading progress by one page, auto-rolling over to the next juz when 20 pages are completed.",
+    },
+    async () => toolResult(await incrementPage(userId))
+  );
+
+  server.registerTool(
+    'update_quran_reading',
+    {
+      description: "Update the user's current Quran reading position (surah and ayah).",
+      inputSchema: { surahId: z.number().int(), ayahNumber: z.number().int() },
+    },
+    async ({ surahId, ayahNumber }) => {
+      const surah = await findSurahById(surahId);
+      if (!surah) return toolError(`No surah found with id ${surahId}.`);
+      if (ayahNumber < 1 || ayahNumber > surah.numberOfAyahs) {
+        return toolError(`ayahNumber is out of range for this surah (1-${surah.numberOfAyahs}).`);
+      }
+
+      const progress = await updateCurrentReading(userId, surahId, ayahNumber);
+      return toolResult(progress);
     }
   );
 };

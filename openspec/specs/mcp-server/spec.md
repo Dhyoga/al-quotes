@@ -114,3 +114,22 @@ The MCP server SHALL expose tools to list, create, update, and delete events, ea
 #### Scenario: Deleting an event owned by another user
 - **WHEN** the `delete_event` tool is called with an `id` belonging to a different user
 - **THEN** the system returns a tool error and does not delete the event
+
+### Requirement: Tool surface for Quran progress
+The MCP server SHALL expose tools to retrieve the user's Quran reading progress, increment it by one page, and update the user's current surah/ayah reading position, each scoped to the authenticated user's own data.
+
+#### Scenario: Getting Quran progress
+- **WHEN** the `get_quran_progress` tool is called
+- **THEN** the system returns the authenticated user's juz completed, pages in the current juz, and current surah/ayah, creating a progress record if one does not yet exist
+
+#### Scenario: Incrementing Quran page progress
+- **WHEN** the `increment_quran_page` tool is called
+- **THEN** the system adds one page to the user's progress, rolling `pagesInCurrentJuz` back to 0 and incrementing `juzCompleted` once 20 pages have been read
+
+#### Scenario: Updating the current reading position
+- **WHEN** the `update_quran_reading` tool is called with a `surahId` and `ayahNumber`
+- **THEN** the system validates the surah exists and the ayah number is within range, then updates the user's current reading position
+
+#### Scenario: Updating the current reading position with an out-of-range ayah
+- **WHEN** the `update_quran_reading` tool is called with an `ayahNumber` greater than the surah's `numberOfAyahs` or less than 1
+- **THEN** the system returns a tool error and makes no change
