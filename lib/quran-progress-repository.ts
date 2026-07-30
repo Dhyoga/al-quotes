@@ -1,6 +1,7 @@
 import type { QuranProgress } from '@prisma/client';
 import prisma from './prisma.js';
 import { publishQuranProgressEvent } from './pusher.js';
+import { getJuzForPosition } from './juz-boundaries.js';
 
 const PAGES_PER_JUZ = 20;
 const TOTAL_JUZ = 30;
@@ -44,9 +45,18 @@ const incrementPage = async (userId: string) => {
 const updateCurrentReading = async (userId: string, surahId: number, ayahNumber: number) => {
   await getOrCreateForUser(userId);
 
+  const surah = await prisma.quranSurah.findUniqueOrThrow({ where: { id: surahId } });
+  const juz = getJuzForPosition(surah.number, ayahNumber);
+
   const updated = await prisma.quranProgress.update({
     where: { userId },
-    data: { currentSurahId: surahId, currentAyahNumber: ayahNumber, lastReadAt: new Date() },
+    data: {
+      currentSurahId: surahId,
+      currentAyahNumber: ayahNumber,
+      lastReadAt: new Date(),
+      juzCompleted: juz - 1,
+      pagesInCurrentJuz: 0,
+    },
   });
 
   publishQuranProgressEvent(userId, 'quranProgress.updated', updated);

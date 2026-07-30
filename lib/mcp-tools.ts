@@ -302,7 +302,8 @@ const registerTools = (server: McpServer, userId: string): void => {
   server.registerTool(
     'update_quran_reading',
     {
-      description: "Update the user's current Quran reading position (surah and ayah).",
+      description:
+        "Update the user's current Quran reading position (surah and ayah). juzCompleted is automatically recalculated from the standard mushaf juz boundaries to match the new position.",
       inputSchema: { surahId: z.number().int(), ayahNumber: z.number().int() },
     },
     async ({ surahId, ayahNumber }) => {
