@@ -44,7 +44,19 @@ Alternatif: menambah `body-parser` ke `dependencies`. Ditolak karena menambah sa
 
 ### D3. `npm audit fix` tanpa `--force`
 
-Semua temuan menyatakan `fix available via npm audit fix`, artinya tanpa major bump. Jika ternyata audit fix meminta major bump, itu keluar dari rencana dan dibahas ulang.
+Semua temuan menyatakan `fix available via npm audit fix`, artinya tanpa major bump. Jika ternyata audit fix meminta major bump, itu keluar dari rencana dan dibahas ulang. Hasil nyata: tanpa major bump, 0 temuan.
+
+### D5. Commit `package-lock.json` dan naikkan batas bawah di `package.json`
+
+Ditemukan saat implementasi: `package-lock.json` ada di `.gitignore` dan tidak pernah di-commit. Akibatnya `npm audit fix` hanya mengubah lockfile lokal, dan Vercel menginstal tanpa lockfile (versi terbaru yang cocok dengan rentang, tidak tercatat, tidak reproduksibel). Dua langkah, keduanya dikerjakan:
+
+- Naikkan rentang di `package.json` ke versi terpatch (`express ^4.22.3`, `zod ^4.6.7`, `@modelcontextprotocol/sdk ^1.32.2`, trio Prisma `^7.10.1`). Ini menjamin build tanpa lockfile pun tidak bisa memilih versi rentan.
+- Hapus `package-lock.json` dari `.gitignore` dan commit lockfile. Vercel memakai `npm ci` bila lockfile ada, sehingga build reproduksibel dan audit bermakna.
+
+Trio Prisma dinaikkan bersama: audit fix menaikkan `prisma` ke 7.10.1 sementara `@prisma/client` tertinggal di 7.8.0; menyamakan ketiganya menghindari versi CLI dan client yang berbeda.
+
+Alternatif: hanya salah satu langkah. Ditolak oleh pemilik change; dipilih keduanya.
+Trade-off: lockfile yang dibuat di satu mesin bisa memunculkan diff di mesin lain; semua entri `resolved` mengarah ke `registry.npmjs.org`, jadi risikonya kecil.
 
 ### D4. Dua deploy terpisah
 

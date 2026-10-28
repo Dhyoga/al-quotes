@@ -8,6 +8,7 @@ Pada saat yang sama `npm audit --omit=dev` melaporkan 17 temuan (1 critical, 11 
 
 - Pin runtime ke Node 24 lewat `engines.node = "24.x"` di `package.json` (menimpa setelan dashboard Vercel, tercatat di git). Setelan Node.js Version di dashboard Vercel juga diubah ke 24.x agar konsisten.
 - Jalankan `npm audit fix` (tanpa `--force`) sehingga lockfile memakai versi terpatch untuk `express`, `body-parser`, `qs`, `path-to-regexp`, `proxy-addr`, `@modelcontextprotocol/sdk`, `zod`, dan transitif lainnya.
+- Naikkan batas bawah di `package.json` ke versi terpatch, dan **commit `package-lock.json`** (sebelumnya di-ignore, sehingga Vercel menginstal tanpa lockfile). Ditemukan saat implementasi; lihat D5 di design.md.
 - Jadikan `body-parser` tidak lagi dependensi tersirat: [server.ts](server.ts) mengimpornya padahal tidak ada di `package.json`. Ganti dengan `express.json()` / `express.urlencoded()` bawaan Express.
 - Dua deploy terpisah (runtime dulu, dependensi kemudian) agar rollback mudah dan penyebab regresi jelas.
 - Tidak ada perubahan perilaku API, skema database, atau kontrak endpoint.

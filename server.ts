@@ -1,5 +1,4 @@
 import { fileURLToPath } from 'url';
-import bodyParser from 'body-parser';
 import cors from 'cors'; // Tambahkan import cors
 import quotesRoutes from './routes/quotes.js';
 import picturesRoutes from './routes/pictures.js';
@@ -49,9 +48,9 @@ app.use(
     })
 );
 
-app.use(bodyParser.json());
+app.use(express.json());
 // pusher-js's default auth transport posts socket_id/channel_name as form-encoded, not JSON
-app.use('/pusher/auth', bodyParser.urlencoded({ extended: true }));
+app.use('/pusher/auth', express.urlencoded({ extended: true }));
 
 app.use('/quotes', quotesRoutes);
 app.use('/pictures', picturesRoutes);
